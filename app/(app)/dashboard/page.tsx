@@ -19,7 +19,9 @@ export default async function DashboardPage() {
     }),
   ])
 
-  const statusCounts = Object.fromEntries(itemsByStatus.map((g) => [g.currentStatus, g._count.id]))
+  const statusCounts = Object.fromEntries(
+    itemsByStatus.map((g: { currentStatus: string; _count: { id: number } }) => [g.currentStatus, g._count.id])
+  )
   const available = statusCounts["พร้อมใช้งาน"] ?? 0
   const onLoan = statusCounts["ถูกยืม"] ?? 0
   const damaged = statusCounts["ชำรุด"] ?? 0
