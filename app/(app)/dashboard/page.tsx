@@ -26,7 +26,7 @@ export default async function DashboardPage() {
   const onLoan = statusCounts["ถูกยืม"] ?? 0
   const damaged = statusCounts["ชำรุด"] ?? 0
 
-  const heatPoints = patientCoords
+  const heatPoints = (patientCoords as Array<{ latitude: unknown; longitude: unknown }>)
     .filter((p) => p.latitude != null && p.longitude != null)
     .map((p) => ({ lat: Number(p.latitude), lng: Number(p.longitude) }))
 
