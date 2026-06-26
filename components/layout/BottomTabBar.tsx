@@ -1,13 +1,12 @@
 "use client"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, ClipboardList, Users, Package, BarChart3 } from "lucide-react"
+import { LayoutDashboard, ClipboardList, Package, BarChart3 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const TABS = [
   { href: "/dashboard", label: "หน้าหลัก", Icon: LayoutDashboard },
   { href: "/requests", label: "คำร้อง", Icon: ClipboardList },
-  { href: "/patients", label: "ผู้ป่วย", Icon: Users },
   { href: "/inventory", label: "คลัง", Icon: Package },
   { href: "/reports", label: "รายงาน", Icon: BarChart3 },
 ]

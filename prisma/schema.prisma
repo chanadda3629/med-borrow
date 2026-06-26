@@ -84,6 +84,7 @@ model EquipmentItem {
   assetNumber          String                     @unique
   equipmentType        String
   receivedDate         DateTime
+  donorName            String?
   currentStatus        String
   currentLoanRequestId String?                    @unique
   createdAt            DateTime                   @default(now())

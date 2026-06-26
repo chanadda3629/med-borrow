@@ -7,6 +7,9 @@ import {
 } from "@/lib/domain/transitions"
 import type { BorrowWorkflowStatus } from "@/lib/domain/schemas"
 import { aiRecommendationResultSchema } from "@/lib/domain/schemas"
+import { BORROW_WORKFLOW_STATUSES } from "@/lib/domain/constants"
+import { getSession } from "@/lib/auth/get-session"
+import { formatThaiDateTime } from "@/lib/utils/format-thai-date"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { WorkflowStatusStepper } from "@/components/shared/WorkflowStatusStepper"
@@ -21,6 +24,7 @@ import {
   TableCell,
 } from "@/components/ui/table"
 import { WorkflowActions } from "./_components/WorkflowActions"
+import { AdminStatusOverride } from "./_components/AdminStatusOverride"
 
 interface PageProps {
   params: Promise<{ requestId: string }>
@@ -39,6 +43,9 @@ export default async function RequestDetailPage({ params }: PageProps) {
   })
 
   if (!request) notFound()
+
+  const session = await getSession()
+  const isAdmin = session.user.role === "ADMIN"
 
   const currentStatus = request.workflowStatus as BorrowWorkflowStatus
   const nextStatuses = getNextBorrowWorkflowStatuses(currentStatus)
@@ -139,6 +146,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
               <Row label="หมายเลขครุภัณฑ์" value={request.assignedEquipmentItem.assetNumber} />
               <Row label="รหัสอุปกรณ์" value={request.assignedEquipmentItem.equipmentCode} />
               <Row label="ประเภท" value={request.assignedEquipmentItem.equipmentType} />
+              <Row label="ผู้บริจาค" value={request.assignedEquipmentItem.donorName ?? "-"} />
               <Row
                 label="สถานะ"
                 value={
@@ -191,7 +199,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
                         <StatusBadge status={h.toStatus} type="workflow" />
                       </TableCell>
                       <TableCell className="text-xs text-gray-500">
-                        {h.changedAt.toLocaleString("th-TH")}
+                        {formatThaiDateTime(h.changedAt)}
                       </TableCell>
                     </TableRow>
                   ))
@@ -226,6 +234,22 @@ export default async function RequestDetailPage({ params }: PageProps) {
               {advanceStatuses.length > 0 && (
                 <WorkflowActions requestId={requestId} nextStatuses={advanceStatuses} />
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Admin status override */}
+        {isAdmin && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">ปรับสถานะ (แอดมิน)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AdminStatusOverride
+                requestId={requestId}
+                currentStatus={currentStatus}
+                allStatuses={BORROW_WORKFLOW_STATUSES}
+              />
             </CardContent>
           </Card>
         )}

@@ -1,6 +1,6 @@
 "use client"
-import { useEffect } from "react"
-import { MapContainer, TileLayer, useMap } from "react-leaflet"
+import { useEffect, useState } from "react"
+import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet"
 import "leaflet/dist/leaflet.css"
 
 interface HeatPoint { lat: number; lng: number }
@@ -49,6 +49,36 @@ function HeatLayer({ points }: { points: HeatPoint[] }) {
   return null
 }
 
+function UserLocation() {
+  const map = useMap()
+  const [position, setPosition] = useState<[number, number] | null>(null)
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude]
+        setPosition(coords)
+        map.setView(coords, 16)
+      },
+      (err) => {
+        console.warn("ไม่สามารถเข้าถึงตำแหน่งของคุณได้", err.message)
+      }
+    )
+  }, [map])
+
+  if (!position) return null
+  return (
+    <CircleMarker
+      center={position}
+      radius={8}
+      pathOptions={{ color: "#fff", weight: 2, fillColor: "#2563eb", fillOpacity: 1 }}
+    >
+      <Tooltip>ตำแหน่งของคุณ</Tooltip>
+    </CircleMarker>
+  )
+}
+
 interface LeafletHeatMapProps {
   points: HeatPoint[]
   center?: [number, number]
@@ -60,10 +90,11 @@ export function LeafletHeatMap({ points, center = [13.7563, 100.5018], zoom = 7 
     <div className="h-80 w-full rounded-lg overflow-hidden border border-gray-200">
       <MapContainer center={center} zoom={zoom} className="h-full w-full" style={{ zIndex: 0 }}>
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution="Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics"
         />
         <HeatLayer points={points} />
+        <UserLocation />
       </MapContainer>
     </div>
   )

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { db } from "@/lib/db"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StatusBadge } from "@/components/shared/StatusBadge"
+import { formatThaiDate, formatThaiDateTime } from "@/lib/utils/format-thai-date"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
@@ -43,26 +44,13 @@ export default async function InventoryItemPage({ params }: PageProps) {
             <Row label="รหัสอุปกรณ์" value={item.equipmentCode} />
             <Row label="หมายเลขครุภัณฑ์" value={item.assetNumber} />
             <Row label="ประเภทอุปกรณ์" value={item.equipmentType} />
+            <Row label="ผู้บริจาค" value={item.donorName ?? "-"} />
             <Row
               label="สถานะปัจจุบัน"
               value={<StatusBadge status={item.currentStatus} type="equipment" />}
             />
-            <Row
-              label="วันที่รับเข้าคลัง"
-              value={item.receivedDate.toLocaleDateString("th-TH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            />
-            <Row
-              label="วันที่บันทึก"
-              value={item.createdAt.toLocaleDateString("th-TH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            />
+            <Row label="วันที่รับเข้าคลัง" value={formatThaiDate(item.receivedDate)} />
+            <Row label="วันที่บันทึก" value={formatThaiDate(item.createdAt)} />
             {item.currentLoanRequestId && (
               <Row label="คำร้องปัจจุบัน" value={item.currentLoanRequestId} />
             )}
@@ -100,7 +88,7 @@ export default async function InventoryItemPage({ params }: PageProps) {
                         <StatusBadge status={h.toStatus} type="equipment" />
                       </TableCell>
                       <TableCell className="text-xs text-gray-500">
-                        {h.changedAt.toLocaleString("th-TH")}
+                        {formatThaiDateTime(h.changedAt)}
                       </TableCell>
                     </TableRow>
                   ))
@@ -130,7 +118,7 @@ export default async function InventoryItemPage({ params }: PageProps) {
                   {item.returnHistory.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell className="text-xs">
-                        {r.returnDate.toLocaleDateString("th-TH")}
+                        {formatThaiDate(r.returnDate)}
                       </TableCell>
                       <TableCell>
                         <span
