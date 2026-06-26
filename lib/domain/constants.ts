@@ -32,6 +32,25 @@ export const BORROW_WORKFLOW_STATUSES = [
   "ปิดรายการ",
 ] as const;
 
+// Per-status text color (flat list / labels). Pill colors live in StatusBadge.
+export const WORKFLOW_TEXT_COLORS: Record<string, string> = {
+  "รับคำร้อง": "text-blue-600",
+  "ประเมินผู้ป่วย": "text-yellow-600",
+  "AI แนะนำอุปกรณ์": "text-purple-600",
+  "ตรวจสอบคลังอุปกรณ์": "text-orange-600",
+  "อนุมัติ": "text-green-600",
+  "ไม่อนุมัติ": "text-red-600",
+  "เตรียมจัดส่ง": "text-blue-700",
+  "จัดส่งสำเร็จ": "text-teal-600",
+  "รอคืน": "text-amber-600",
+  "คืนอุปกรณ์": "text-lime-600",
+  "ปิดรายการ": "text-gray-500",
+};
+
+export function workflowTextColor(status: string): string {
+  return WORKFLOW_TEXT_COLORS[status] ?? "text-gray-500";
+}
+
 export const BORROW_APPROVAL_DECISIONS = ["อนุมัติ", "ไม่อนุมัติ"] as const;
 
 export const DELIVERY_STATUSES = [

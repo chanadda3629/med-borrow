@@ -1,7 +1,8 @@
 "use client"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useRef } from "react"
-import { Search, X } from "lucide-react"
+import { useCallback, useState } from "react"
+import { Search, X, SlidersHorizontal, ChevronDown } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface InventoryFiltersProps {
   equipmentTypes: string[]
@@ -9,6 +10,7 @@ interface InventoryFiltersProps {
   currentType?: string
   currentStatus?: string
   currentQ?: string
+  currentSort?: string
 }
 
 export function InventoryFilters({
@@ -17,12 +19,14 @@ export function InventoryFilters({
   currentType,
   currentStatus,
   currentQ,
+  currentSort,
 }: InventoryFiltersProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [query, setQuery] = useState(currentQ ?? "")
+  const [showTypes, setShowTypes] = useState(Boolean(currentType))
 
-  const updateParam = useCallback(
+  const setParam = useCallback(
     (key: string, value: string) => {
       const params = new URLSearchParams(searchParams.toString())
       if (value && value !== "all") {
@@ -35,89 +39,122 @@ export function InventoryFilters({
     [router, searchParams],
   )
 
-  const handleSearch = useCallback(
-    (val: string) => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (val) {
-        params.set("q", val)
-      } else {
-        params.delete("q")
-      }
-      router.push(`/inventory?${params.toString()}`)
+  const toggleParam = useCallback(
+    (key: string, value: string) => {
+      setParam(key, searchParams.get(key) === value ? "all" : value)
     },
-    [router, searchParams],
+    [searchParams, setParam],
   )
 
-  const clearSearch = () => {
-    if (inputRef.current) inputRef.current.value = ""
-    handleSearch("")
+  const handleSearch = (val: string) => {
+    setQuery(val)
+    setParam("q", val)
   }
 
-  const chipBase =
-    "shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors whitespace-nowrap"
-  const chipActive = "bg-gray-900 text-white border-gray-900"
-  const chipInactive = "bg-white text-gray-600 border-gray-200 hover:border-gray-400"
+  const clearSearch = () => {
+    setQuery("")
+    setParam("q", "")
+  }
 
   return (
     <div className="space-y-3">
-      {/* Search bar */}
-      <div className="relative flex items-center mx-4">
-        <Search className="absolute left-3 w-4 h-4 text-gray-400 pointer-events-none" />
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder="ค้นหาหมายเลขครุภัณฑ์..."
-          defaultValue={currentQ ?? ""}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="w-full pl-9 pr-10 py-2.5 rounded-full border border-gray-200 bg-white text-sm outline-none focus:border-gray-400 focus:ring-0"
-        />
-        {currentQ && (
+      {/* Search pill */}
+      <div className="flex items-center gap-2">
+        <div className="flex h-12 flex-1 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 focus-within:border-transparent focus-within:ring-2 focus-within:ring-blue-500">
+          <Search className="h-5 w-5 shrink-0 text-gray-400" />
+          <input
+            value={query}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="ค้นหาหมายเลขครุภัณฑ์..."
+            className="w-full bg-transparent text-base placeholder:text-gray-400 focus:outline-none"
+          />
+        </div>
+        {query && (
           <button
+            type="button"
             onClick={clearSearch}
-            className="absolute right-3 w-5 h-5 rounded-full bg-gray-300 flex items-center justify-center hover:bg-gray-400"
+            aria-label="ล้างคำค้นหา"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
           >
-            <X className="w-3 h-3 text-white" />
+            <X className="h-5 w-5" />
           </button>
         )}
       </div>
 
-      {/* Type filter chips */}
-      <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none">
+      {/* Filter row */}
+      <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none]">
         <button
-          onClick={() => updateParam("type", "all")}
-          className={`${chipBase} ${!currentType ? chipActive : chipInactive}`}
+          type="button"
+          onClick={() => setShowTypes((s) => !s)}
+          aria-label="ตัวกรองประเภท"
+          className={cn(
+            "flex h-9 shrink-0 items-center justify-center rounded-full px-3",
+            showTypes || currentType
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+          )}
         >
-          ทุกประเภท
+          <SlidersHorizontal className="h-4 w-4" />
         </button>
-        {equipmentTypes.map((t) => (
-          <button
-            key={t}
-            onClick={() => updateParam("type", t)}
-            className={`${chipBase} ${currentType === t ? chipActive : chipInactive}`}
+
+        {/* Sort */}
+        <div className="relative shrink-0">
+          <select
+            value={currentSort === "asc" ? "asc" : "desc"}
+            onChange={(e) => setParam("sort", e.target.value === "asc" ? "asc" : "")}
+            aria-label="เรียงลำดับ"
+            className="h-9 appearance-none rounded-full bg-gray-100 pl-4 pr-8 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none"
           >
-            {t}
-          </button>
-        ))}
+            <option value="desc">ใหม่สุด</option>
+            <option value="asc">เก่าสุด</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+        </div>
+
+        {/* Status chips */}
+        {equipmentStatuses.map((s) => {
+          const active = currentStatus === s
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => toggleParam("status", s)}
+              className={cn(
+                "h-9 shrink-0 whitespace-nowrap rounded-full px-3.5 text-sm font-medium",
+                active
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+              )}
+            >
+              {s}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Status filter chips */}
-      <div className="flex gap-2 overflow-x-auto px-4 pb-1 scrollbar-none">
-        <button
-          onClick={() => updateParam("status", "all")}
-          className={`${chipBase} ${!currentStatus ? chipActive : chipInactive}`}
-        >
-          ทุกสถานะ
-        </button>
-        {equipmentStatuses.map((s) => (
-          <button
-            key={s}
-            onClick={() => updateParam("status", s)}
-            className={`${chipBase} ${currentStatus === s ? chipActive : chipInactive}`}
-          >
-            {s}
-          </button>
-        ))}
-      </div>
+      {/* Type filter (toggled by sliders) */}
+      {showTypes && (
+        <div className="flex flex-wrap gap-2">
+          {equipmentTypes.map((t) => {
+            const active = currentType === t
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => toggleParam("type", t)}
+                className={cn(
+                  "h-8 rounded-full px-3 text-xs font-medium",
+                  active
+                    ? "bg-blue-100 text-blue-700 ring-1 ring-blue-300"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200",
+                )}
+              >
+                {t}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

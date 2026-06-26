@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Journeys — แอปยืมอุปกรณ์ทางการแพทย์</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Itim&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --orange:#e8491d;   /* people / systems (marker) */
+    --teal:#0c7a6a;     /* flow arrows + action verbs */
+    --blue:#29abe2;     /* business question bubbles */
+    --ink:#2b2b2b;
+    --paper:#fdfcf7;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:#f3efe4;
+    color:var(--ink);
+    font-family:'Itim','Caveat',cursive;
+    padding:24px 16px 80px;
+  }
+  header.page{
+    max-width:1180px;margin:0 auto 26px;text-align:center;
+  }
+  header.page h1{font-size:38px;margin:0 0 4px;color:var(--orange)}
+  header.page p{font-size:20px;margin:0;color:#666}
+  .legend{
+    display:flex;gap:22px;justify-content:center;flex-wrap:wrap;
+    margin:14px auto 0;font-size:18px;
+  }
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .swatch{width:16px;height:16px;border-radius:50%;display:inline-block}
+  .card{
+    max-width:1180px;margin:0 auto 34px;background:var(--paper);
+    border:2px solid #e3ddcb;border-radius:18px;
+    box-shadow:0 6px 0 #e7e1d0, 0 14px 30px rgba(0,0,0,.06);
+    overflow:hidden;
+  }
+  .card h2{
+    font-size:27px;margin:0;padding:16px 24px 4px;color:var(--ink);
+  }
+  .card .sub{padding:0 24px 6px;font-size:18px;color:#8a7f63;margin:0}
+  .card svg{display:block;width:100%;height:auto}
+  .note{
+    padding:6px 24px 18px;font-size:17px;color:#7a7a7a;
+  }
+  /* svg element classes */
+  .fig{color:var(--orange)}
+  .flow{stroke:var(--teal);stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .ename{font-family:'Itim',cursive;font-size:21px;fill:var(--orange);font-weight:700}
+  .esub{font-family:'Caveat',cursive;font-size:17px;fill:#b06a4d}
+  .verb{font-family:'Itim',cursive;font-size:18px;fill:var(--teal)}
+  .btext{font-family:'Itim',cursive;font-size:15px;fill:#fff}
+  .bubble{fill:var(--blue);opacity:.94}
+</style>
+</head>
+<body>
+
+<header class="page">
+  <h1>User Journey Maps</h1>
+  <p>แอปยืมอุปกรณ์ทางการแพทย์ · ศูนย์ประคองกาย — มุมมองธุรกิจ (napkin sketch)</p>
+  <div class="legend">
+    <span><i class="swatch" style="background:var(--orange)"></i>คน / ระบบ</span>
+    <span><i class="swatch" style="background:var(--teal)"></i>ขั้นตอน (flow)</span>
+    <span><i class="swatch" style="background:var(--blue)"></i>คำถามเชิงธุรกิจ</span>
+  </div>
+</header>
+
+<!-- ===== shared symbols + sketch filter (hidden) ===== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="sketch" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6"
+        xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5"
+      markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L9,5 L0,10 L3,5 Z" fill="var(--teal)"/>
+    </marker>
+
+    <!-- stick person -->
+    <symbol id="person" viewBox="0 0 50 78">
+      <g stroke="currentColor" stroke-width="2.7" fill="none"
+         stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="25" cy="13" r="10"/>
+        <path d="M25,23 V49"/>
+        <path d="M9,34 L25,28 L41,34"/>
+        <path d="M25,49 L12,74"/>
+        <path d="M25,49 L38,74"/>
+      </g>
+    </symbol>
+
+    <!-- laptop / system -->
+    <symbol id="laptop" viewBox="0 0 70 52">
+      <g stroke="currentColor" stroke-width="2.5" fill="none"
+         stroke-linecap="round" stroke-linejoin="round">
+        <rect x="11" y="4" width="48" height="32" rx="2"/>
+        <path d="M4,48 L66,48 L59,38 L11,38 Z"/>
+        <path d="M18,13 H52 M18,20 H47 M18,27 H42"/>
+      </g>
+    </symbol>
+
+    <!-- delivery truck -->
+    <symbol id="truck" viewBox="0 0 72 46">
+      <g stroke="currentColor" stroke-width="2.5" fill="none"
+         stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="13" width="38" height="20" rx="2"/>
+        <path d="M41,19 H55 L65,29 V33 H41 Z"/>
+        <circle cx="16" cy="36" r="5"/>
+        <circle cx="54" cy="36" r="5"/>
+      </g>
+    </symbol>
+
+    <!-- file cabinet / records -->
+    <symbol id="cabinet" viewBox="0 0 46 58">
+      <g stroke="currentColor" stroke-width="2.5" fill="none"
+         stroke-linecap="round" stroke-linejoin="round">
+        <rect x="6" y="4" width="34" height="50" rx="2"/>
+        <path d="M6,22 H40 M6,40 H40"/>
+        <path d="M19,12 H27 M19,30 H27 M19,48 H27"/>
+      </g>
+    </symbol>
+
+    <!-- map pin / GPS -->
+    <symbol id="pin" viewBox="0 0 44 58">
+      <g stroke="currentColor" stroke-width="2.6" fill="none"
+         stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22,54 C22,54 6,34 6,21 A16,16 0 0,1 38,21 C38,34 22,54 22,54 Z"/>
+        <circle cx="22" cy="21" r="6"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="board"></div>
+
+<script>
+/* ---------- tiny SVG helpers ---------- */
+const SVGNS="http://www.w3.org/2000/svg";
+function el(name,attrs={},kids=[]){
+  const n=document.createElementNS(SVGNS,name);
+  for(const k in attrs) n.setAttribute(k,attrs[k]);
+  for(const c of kids) n.appendChild(c);
+  return n;
+}
+function txt(x,y,cls,str,extra={}){
+  const t=el("text",{x,y,class:cls,"text-anchor":"middle",...extra});
+  t.textContent=str; return t;
+}
+
+/* node glyph sizes */
+const SZ={person:[50,78],laptop:[70,52],truck:[72,46],cabinet:[46,58],pin:[44,58]};
+
+function drawNode(shapes,labels,n){
+  const [w,h]=SZ[n.type];
+  shapes.appendChild(el("use",{href:"#"+n.type,x:n.x,y:n.y,width:w,height:h,class:"fig"}));
+  const cx=n.x+w/2, by=n.y+h+20;
+  if(n.label) labels.appendChild(txt(cx,by,"ename",n.label));
+  if(n.sub)   labels.appendChild(txt(cx,by+19,"esub",n.sub));
+}
+
+function drawEdge(shapes,labels,e){
+  let d;
+  if(e.cx!=null) d=`M${e.x1},${e.y1} Q${e.cx},${e.cy} ${e.x2},${e.y2}`;
+  else d=`M${e.x1},${e.y1} L${e.x2},${e.y2}`;
+  shapes.appendChild(el("path",{d,class:"flow","marker-end":"url(#arrow)"}));
+  if(e.label){
+    const lx=e.lx!=null?e.lx:(e.x1+e.x2)/2;
+    const ly=e.ly!=null?e.ly:(e.y1+e.y2)/2-8;
+    (e.label.split("\n")).forEach((ln,i)=>
+      labels.appendChild(txt(lx,ly+i*19,"verb",ln)));
+  }
+}
+
+function drawBubble(shapes,labels,b){
+  shapes.appendChild(el("circle",{cx:b.x,cy:b.y,r:b.r,class:"bubble"}));
+  const lines=b.lines, lh=18, start=b.y-(lines.length-1)*lh/2+5;
+  lines.forEach((ln,i)=>labels.appendChild(txt(b.x,start+i*lh,"btext",ln)));
+}
+
+function render(j){
+  const card=document.createElement("div");
+  card.className="card";
+  card.innerHTML=`<h2>${j.title}</h2><p class="sub">${j.subtitle}</p>`;
+  const svg=el("svg",{viewBox:`0 0 ${j.w} ${j.h}`,role:"img"});
+  const shapes=el("g",{filter:"url(#sketch)"});   // wobble = hand drawn
+  const labels=el("g",{});
+  (j.bubbles||[]).forEach(b=>drawBubble(shapes,labels,b));
+  (j.edges||[]).forEach(e=>drawEdge(shapes,labels,e));
+  (j.nodes||[]).forEach(n=>drawNode(shapes,labels,n));
+  svg.appendChild(shapes); svg.appendChild(labels);
+  card.appendChild(svg);
+  if(j.note){const p=document.createElement("p");p.className="note";p.textContent=j.note;card.appendChild(p);}
+  document.getElementById("board").appendChild(card);
+}
+
+/* =====================================================================
+   JOURNEY 1 — ยืม → ส่งถึงบ้าน  (Borrow request to delivery)
+   ===================================================================== */
+render({
+  title:"1 · เส้นทางการยืม → ส่งถึงบ้าน",
+  subtitle:"ญาติร้องขอ ▸ เจ้าหน้าที่ลงทะเบียน/ประเมิน ▸ AI แนะนำ ▸ ตรวจคลัง ▸ อนุมัติ ▸ จัดส่ง",
+  w:1180,h:560,
+  nodes:[
+    {type:"person",x:50,y:96,label:"ญาติผู้ป่วย",sub:"Relative"},
+    {type:"person",x:300,y:96,label:"เจ้าหน้าที่",sub:"Staff"},
+    {type:"laptop",x:520,y:108,label:"ระบบผู้ป่วย",sub:"Patient App"},
+    {type:"laptop",x:780,y:108,label:"AI แนะนำ",sub:"AI · decision support"},
+    {type:"person",x:800,y:350,label:"อนุมัติ",sub:"Staff approves"},
+    {type:"laptop",x:540,y:360,label:"คลังอุปกรณ์",sub:"Serialized stock"},
+    {type:"truck",x:290,y:368,label:"ทีมจัดส่ง",sub:"Delivery + GPS"}
+  ],
+  edges:[
+    {x1:108,y1:128,x2:296,y2:128,label:"โทรแจ้ง / ขอยืม"},
+    {x1:356,y1:128,x2:516,y2:130,label:"ลงทะเบียน\n+ ประเมิน"},
+    {x1:594,y1:132,x2:776,y2:132,label:"ส่งข้อมูล"},
+    {x1:820,y1:162,x2:828,y2:346,label:"AI เสนอ →\nคนตัดสิน",lx:905,ly:250},
+    {x1:796,y1:392,x2:616,y2:392,label:"เลือกอุปกรณ์ (ผูก item)"},
+    {x1:536,y1:392,x2:368,y2:392,label:"จ่ายของ → จัดส่ง"},
+    {x1:300,y1:366,x2:92,y2:178,cx:120,cy:300,label:"ส่งถึงบ้าน + LINE แจ้งเตือน",lx:135,ly:430}
+  ],
+  bubbles:[
+    {x:95,y:40,r:48,lines:["ทำไมต้องโทร?","ฟอร์มออนไลน์","เองได้ไหม?"]},
+    {x:340,y:40,r:40,lines:["กรอกข้อมูล","ซ้ำ 2 รอบ?"]},
+    {x:660,y:46,r:44,lines:["ทำไมแยก","หลายระบบ?"]},
+    {x:1060,y:150,r:52,lines:["AI เชื่อแค่ไหน?","ใครรับผิดชอบ","การตัดสินใจ?"]},
+    {x:470,y:500,r:46,lines:["ยังจดกระดาษ","คู่กันอยู่ไหม?"]},
+    {x:140,y:505,r:48,lines:["ญาติเห็นสถานะ","เรียลไทม์","ไหม?"]}
+  ],
+  note:"กฎ: ข้ามขั้นไม่ได้ · อนุมัติต้องผูกอุปกรณ์ตามหมายเลขครุภัณฑ์จริง · AI = ผู้ช่วย ไม่ใช่ผู้อนุมัติ"
+});
+
+/* =====================================================================
+   JOURNEY 2 — คืน → ตรวจสภาพ → ปิดงาน
+   ===================================================================== */
+render({
+  title:"2 · เส้นทางการคืน → ตรวจสภาพ → ปิดรายการ",
+  subtitle:"ญาติคืนของ ▸ เจ้าหน้าที่ถ่ายรูป+บันทึกสภาพ ▸ ใช้ได้กลับคลัง / ชำรุดส่งซ่อม",
+  w:1180,h:560,
+  nodes:[
+    {type:"person",x:50,y:96,label:"ญาติผู้ป่วย",sub:"Returns item"},
+    {type:"person",x:300,y:96,label:"เจ้าหน้าที่",sub:"Inspect"},
+    {type:"laptop",x:540,y:108,label:"บันทึกการคืน",sub:"Photo + condition"},
+    {type:"laptop",x:520,y:360,label:"พร้อมใช้งาน",sub:"Available +1"},
+    {type:"cabinet",x:830,y:352,label:"ชำรุด / ซ่อม",sub:"Damaged +1"}
+  ],
+  edges:[
+    {x1:108,y1:128,x2:296,y2:128,label:"คืนอุปกรณ์"},
+    {x1:356,y1:128,x2:536,y2:132,label:"ถ่ายรูป + ระบุสภาพ"},
+    {x1:566,y1:162,x2:582,y2:356,label:"ใช้ได้ →\nคืนคลัง",lx:470,ly:250},
+    {x1:600,y1:150,x2:842,y2:350,cx:760,cy:210,label:"ชำรุด → แจ้งซ่อม",lx:790,ly:250},
+    {x1:520,y1:392,x2:92,y2:178,cx:150,cy:300,label:"LINE: ปิดรายการเรียบร้อย",lx:150,ly:430}
+  ],
+  bubbles:[
+    {x:95,y:40,r:44,lines:["มีกำหนดคืน","แจ้งล่วงหน้า","อัตโนมัติไหม?"]},
+    {x:620,y:42,r:46,lines:["ทำไมต้องถ่าย","รูปทุกครั้ง?"]},
+    {x:1010,y:200,r:50,lines:["ใครยืนยันว่า","\"ชำรุดจริง\"?","กันของหาย"]},
+    {x:300,y:470,r:48,lines:["สต็อกอัปเดต","ทันทีไหม?","กันจองซ้ำ"]}
+  ],
+  note:"กฎ: หน้าจอคืนบังคับแนบรูป · ถ้าชำรุดต้องมีหมายเหตุ · ของชำรุดไม่ถูกนับเป็นพร้อมใช้"
+});
+
+/* =====================================================================
+   JOURNEY 3 — ญาติติดตามสถานะผ่าน LINE
+   ===================================================================== */
+render({
+  title:"3 · ญาติติดตามสถานะเอง (LINE)",
+  subtitle:"ทุกครั้งที่สถานะเปลี่ยน ระบบ push เข้า LINE — ญาติไม่ต้องโทรถาม",
+  w:1180,h:520,
+  nodes:[
+    {type:"laptop",x:120,y:200,label:"ระบบยืม-คืน",sub:"Workflow engine"},
+    {type:"laptop",x:520,y:200,label:"LINE Gateway",sub:"One-way push"},
+    {type:"person",x:930,y:190,label:"ญาติผู้ป่วย",sub:"อ่านเอง ไม่ต้องโทร"}
+  ],
+  edges:[
+    {x1:192,y1:226,x2:516,y2:226,label:"สถานะเปลี่ยน → ส่งข้อความ"},
+    {x1:594,y1:226,x2:926,y2:226,label:"แจ้งเตือนอัตโนมัติ"}
+  ],
+  bubbles:[
+    {x:340,y:80,r:50,lines:["รับ ▸ อนุมัติ ▸","เตรียมส่ง ▸ ส่งสำเร็จ","▸ ใกล้ครบกำหนด ▸ คืน"]},
+    {x:340,y:420,r:46,lines:["ส่งภายใน","5 วินาที?"]},
+    {x:720,y:400,r:50,lines:["ถ้า LINE ล่ม","งานหลักต้อง","ไม่สะดุด"]},
+    {x:1060,y:120,r:48,lines:["ญาติที่ไม่มี","LINE ทำยังไง?"]},
+    {x:1060,y:360,r:50,lines:["one-way พอไหม?","หรืออยาก","ตอบกลับได้"]}
+  ],
+  note:"Phase 1 = push ทางเดียว · log ทุกครั้งที่ส่ง · ส่งไม่สำเร็จให้ retry ไม่บล็อกขั้นตอนงาน"
+});
+
+/* =====================================================================
+   JOURNEY 4 — ผู้บริหารดู Dashboard + Heat map
+   ===================================================================== */
+render({
+  title:"4 · ผู้บริหารดูภาพรวม + วางแผนจัดซื้อ",
+  subtitle:"ตัวเลขจาก item จริง + พิกัดผู้ป่วย ▸ Dashboard + Heat map ▸ ตัดสินใจซื้อ",
+  w:1180,h:560,
+  nodes:[
+    {type:"laptop",x:60,y:80,label:"คลังอุปกรณ์",sub:"per-item status"},
+    {type:"laptop",x:60,y:330,label:"รายการยืม",sub:"active loans"},
+    {type:"pin",x:95,y:200,label:"พิกัดผู้ป่วย",sub:"GPS"},
+    {type:"laptop",x:540,y:200,label:"Dashboard",sub:"5 ตัวชี้วัด + Heat map"},
+    {type:"person",x:940,y:190,label:"ผู้บริหาร",sub:"วางแผนจัดซื้อ"}
+  ],
+  edges:[
+    {x1:132,y1:120,x2:536,y2:210,label:"นับจากของจริง",lx:330,ly:140},
+    {x1:165,y1:228,x2:536,y2:226,label:"พิกัด → ความหนาแน่น"},
+    {x1:132,y1:368,x2:536,y2:244,label:"loan ที่ยัง active",lx:330,ly:340},
+    {x1:614,y1:226,x2:936,y2:226,label:"อ่านภาพรวม → ตัดสินใจ"}
+  ],
+  bubbles:[
+    {x:760,y:70,r:56,lines:["5 ตัว: ผู้ป่วย /","ยืมอยู่ / ว่าง /","ถูกยืม / ชำรุด"]},
+    {x:430,y:470,r:48,lines:["เรียลไทม์จริง","หรือดีเลย์?"]},
+    {x:760,y:470,r:54,lines:["heat map ช่วยเลือก","พื้นที่ลงของ","ได้จริงไหม?"]},
+    {x:1080,y:120,r:50,lines:["ข้อมูลพอ","ใช้ตัดสินใจ","ซื้อไหม?"]}
+  ],
+  note:"ตัวเลขทุกตัว derive จากสถานะ item แบบ serialized — ไม่นับรวมแบบ aggregate"
+});
+</script>
+</body>
+</html>

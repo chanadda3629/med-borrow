@@ -1,10 +1,10 @@
 import { PageHeader } from "@/components/layout/PageHeader"
 import { PatientIntakeWizard } from "./_components/PatientIntakeWizard"
 
-export default function NewPatientPage() {
+export default function NewRequestPage() {
   return (
     <div>
-      <PageHeader title="เพิ่มผู้ป่วยใหม่" showBack />
+      <PageHeader title="เพิ่มคำร้องใหม่" showBack />
       <PatientIntakeWizard />
     </div>
   )

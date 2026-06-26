@@ -1,15 +1,28 @@
 import Link from "next/link"
+import { ClipboardList } from "lucide-react"
 import { db } from "@/lib/db"
-import { BORROW_WORKFLOW_STATUSES } from "@/lib/domain/constants"
+import { BORROW_WORKFLOW_STATUSES, workflowTextColor } from "@/lib/domain/constants"
 import { PageHeader } from "@/components/layout/PageHeader"
-import { StatusBadge } from "@/components/shared/StatusBadge"
-import { formatThaiDateTime } from "@/lib/utils/format-thai-date"
-import { Card, CardContent } from "@/components/ui/card"
+import { FloatingActionButton } from "@/components/shared/FloatingActionButton"
 import { RequestsFilters } from "./_components/RequestsFilters"
-import { ClipboardList, Plus } from "lucide-react"
 
 interface PageProps {
   searchParams: Promise<{ status?: string }>
+}
+
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+]
+
+function formatDateTime(d: Date): string {
+  const day = d.getDate()
+  const mon = MONTHS[d.getMonth()]
+  const year = d.getFullYear()
+  const minute = d.getMinutes().toString().padStart(2, "0")
+  const ampm = d.getHours() >= 12 ? "PM" : "AM"
+  const hour = (d.getHours() % 12 || 12).toString().padStart(2, "0")
+  return `${day} ${mon} ${year}, ${hour}:${minute} ${ampm}`
 }
 
 export default async function RequestsPage({ searchParams }: PageProps) {
@@ -30,46 +43,44 @@ export default async function RequestsPage({ searchParams }: PageProps) {
     <div>
       <PageHeader title="คำร้องยืมอุปกรณ์" />
 
-      <div className="p-4">
+      <div className="p-4 space-y-4 pb-24">
         <RequestsFilters
           workflowStatuses={[...BORROW_WORKFLOW_STATUSES]}
           currentStatus={status}
         />
-      </div>
 
-      <div className="px-4 pb-4 space-y-3">
         {requests.length === 0 ? (
           <div className="text-center py-16 text-gray-400">ไม่พบคำร้อง</div>
         ) : (
-          requests.map((req) => (
-            <Link key={req.id} href={`/requests/${req.id}`} className="block">
-              <Card>
-                <CardContent className="flex items-start gap-3 p-4">
-                  <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                    <ClipboardList className="w-6 h-6 text-blue-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <StatusBadge status={req.workflowStatus} type="workflow" />
-                    <p className="font-semibold text-gray-900 mt-0.5">{req.patient.fullName}</p>
-                    <p className="text-sm text-gray-500">{req.requestedEquipmentType}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {req.requestNumber} · {formatThaiDateTime(req.createdAt)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))
+          <div className="divide-y divide-gray-100">
+            {requests.map((req) => (
+              <Link
+                key={req.id}
+                href={`/requests/${req.id}`}
+                className="flex items-start gap-3 py-4 transition-colors hover:bg-gray-50"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                  <ClipboardList className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-sm font-semibold ${workflowTextColor(req.workflowStatus)}`}>
+                    {req.workflowStatus}
+                  </p>
+                  <p className="font-semibold text-gray-900 truncate">
+                    {req.patient.fullName}
+                  </p>
+                  <p className="text-sm text-gray-500 truncate">
+                    {req.requestedEquipmentType}
+                  </p>
+                  <p className="text-sm text-gray-400">{formatDateTime(req.createdAt)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         )}
       </div>
 
-      <Link
-        href="/patients/new"
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 bg-blue-600 rounded-full shadow-xl flex items-center justify-center text-white"
-        aria-label="เพิ่มคำร้องใหม่"
-      >
-        <Plus className="w-7 h-7" />
-      </Link>
+      <FloatingActionButton href="/requests/new" label="เพิ่มคำร้อง" />
     </div>
   )
 }
