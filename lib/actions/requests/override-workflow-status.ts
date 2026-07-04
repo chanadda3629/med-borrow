@@ -1,15 +1,7 @@
 "use server"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
-<<<<<<< HEAD
 import { requireAdmin } from "@/lib/auth/require-admin"
-import { borrowWorkflowStatusSchema } from "@/lib/domain/schemas"
-
-export async function overrideWorkflowStatus(requestId: string, toStatus: string) {
-  try {
-    const session = await requireAdmin()
-
-=======
 import { borrowWorkflowStatusSchema } from "@/lib/domain/schemas"
 import { toThaiWorkflowStatus } from "@/lib/domain/labels"
 
@@ -23,20 +15,19 @@ import { toThaiWorkflowStatus } from "@/lib/domain/labels"
 // those side-effects — this is a manual field correction, not a replacement.
 export async function overrideWorkflowStatus(requestId: string, toStatus: string) {
   try {
->>>>>>> 51db79a (Add quick actions, status override workflow, and domain label helpers)
+    const session = await requireAdmin()
+
     const parsed = borrowWorkflowStatusSchema.safeParse(toStatus)
     if (!parsed.success) return err("สถานะไม่ถูกต้อง")
 
     const request = await db.borrowingRequest.findUnique({ where: { id: requestId } })
     if (!request) return err("ไม่พบคำร้อง")
 
-<<<<<<< HEAD
     const from = request.workflowStatus
     if (from === parsed.data) return err("เป็นสถานะเดิมอยู่แล้ว")
-=======
+
     // Normalize any legacy English code stored in the row before recording it.
-    const fromStatus = toThaiWorkflowStatus(request.workflowStatus)
->>>>>>> 51db79a (Add quick actions, status override workflow, and domain label helpers)
+    const fromStatus = toThaiWorkflowStatus(from)
 
     await db.$transaction([
       db.borrowingRequest.update({
@@ -44,17 +35,13 @@ export async function overrideWorkflowStatus(requestId: string, toStatus: string
         data: { workflowStatus: parsed.data },
       }),
       db.borrowingRequestStatusHistory.create({
-<<<<<<< HEAD
         data: {
           requestId,
-          fromStatus: from,
+          fromStatus,
           toStatus: parsed.data,
           changedByUserId: session.user.id ?? null,
           note: "ปรับโดยแอดมิน",
         },
-=======
-        data: { requestId, fromStatus, toStatus: parsed.data },
->>>>>>> 51db79a (Add quick actions, status override workflow, and domain label helpers)
       }),
     ])
 

@@ -7,18 +7,13 @@ import {
 } from "@/lib/domain/transitions"
 import type { BorrowWorkflowStatus } from "@/lib/domain/schemas"
 import { aiRecommendationResultSchema } from "@/lib/domain/schemas"
-<<<<<<< HEAD
-import { BORROW_WORKFLOW_STATUSES } from "@/lib/domain/constants"
-import { getSession } from "@/lib/auth/get-session"
-import { formatThaiDateTime } from "@/lib/utils/format-thai-date"
-=======
 import {
   toThaiWorkflowStatus,
   toThaiEquipmentType,
   toThaiEquipmentStatus,
 } from "@/lib/domain/labels"
 import { formatThaiDateTime } from "@/lib/format"
->>>>>>> 51db79a (Add quick actions, status override workflow, and domain label helpers)
+import { getSession } from "@/lib/auth/get-session"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { WorkflowStatusStepper } from "@/components/shared/WorkflowStatusStepper"
@@ -33,11 +28,7 @@ import {
   TableCell,
 } from "@/components/ui/table"
 import { WorkflowActions } from "./_components/WorkflowActions"
-<<<<<<< HEAD
-import { AdminStatusOverride } from "./_components/AdminStatusOverride"
-=======
 import { StatusOverride } from "./_components/StatusOverride"
->>>>>>> 51db79a (Add quick actions, status override workflow, and domain label helpers)
 
 interface PageProps {
   params: Promise<{ requestId: string }>
@@ -57,16 +48,12 @@ export default async function RequestDetailPage({ params }: PageProps) {
 
   if (!request) notFound()
 
-<<<<<<< HEAD
   const session = await getSession()
   const isAdmin = session.user.role === "ADMIN"
 
-  const currentStatus = request.workflowStatus as BorrowWorkflowStatus
-=======
   // Normalize legacy/external English codes to the canonical Thai status so the
   // stepper, transition logic, and badges all work (and don't crash on unknowns).
   const currentStatus = toThaiWorkflowStatus(request.workflowStatus) as BorrowWorkflowStatus
->>>>>>> 51db79a (Add quick actions, status override workflow, and domain label helpers)
   const nextStatuses = getNextBorrowWorkflowStatuses(currentStatus)
   const isTerminal = isBorrowWorkflowTerminal(currentStatus)
 
@@ -164,11 +151,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
             <CardContent className="space-y-2">
               <Row label="หมายเลขครุภัณฑ์" value={request.assignedEquipmentItem.assetNumber} />
               <Row label="รหัสอุปกรณ์" value={request.assignedEquipmentItem.equipmentCode} />
-<<<<<<< HEAD
-              <Row label="ประเภท" value={request.assignedEquipmentItem.equipmentType} />
-=======
               <Row label="ประเภท" value={toThaiEquipmentType(request.assignedEquipmentItem.equipmentType)} />
->>>>>>> 51db79a (Add quick actions, status override workflow, and domain label helpers)
               <Row label="ผู้บริจาค" value={request.assignedEquipmentItem.donorName ?? "-"} />
               <Row
                 label="สถานะ"
@@ -265,33 +248,17 @@ export default async function RequestDetailPage({ params }: PageProps) {
           </Card>
         )}
 
-<<<<<<< HEAD
-        {/* Admin status override */}
+        {/* Admin status override — set any status, bypassing ordered rules */}
         {isAdmin && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">ปรับสถานะ (แอดมิน)</CardTitle>
+              <CardTitle className="text-base">เปลี่ยนสถานะ (แอดมิน)</CardTitle>
             </CardHeader>
             <CardContent>
-              <AdminStatusOverride
-                requestId={requestId}
-                currentStatus={currentStatus}
-                allStatuses={BORROW_WORKFLOW_STATUSES}
-              />
+              <StatusOverride requestId={requestId} currentStatus={currentStatus} />
             </CardContent>
           </Card>
         )}
-=======
-        {/* Admin status override — set any status, bypassing ordered rules */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">เปลี่ยนสถานะ (แอดมิน)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <StatusOverride requestId={requestId} currentStatus={currentStatus} />
-          </CardContent>
-        </Card>
->>>>>>> 51db79a (Add quick actions, status override workflow, and domain label helpers)
       </div>
     </div>
   )
