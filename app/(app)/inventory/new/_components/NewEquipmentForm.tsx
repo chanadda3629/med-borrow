@@ -22,7 +22,6 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
   const [equipmentType, setEquipmentType] = useState("")
   const [donorName, setDonorName] = useState("")
   const [receivedDate, setReceivedDate] = useState("")
-  const [donorName, setDonorName] = useState("")
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -41,7 +40,6 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
         equipmentType,
         donorName: donorName.trim() || undefined,
         receivedDate,
-        donorName: donorName.trim(),
       })
 
       if (!result.success) {
@@ -116,17 +114,6 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
               type="date"
               value={receivedDate}
               onChange={(e) => setReceivedDate(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="donorName">ชื่อผู้บริจาค (ถ้ามี)</Label>
-            <Input
-              id="donorName"
-              value={donorName}
-              onChange={(e) => setDonorName(e.target.value)}
-              placeholder="เช่น คุณสมชาย ใจดี"
               disabled={loading}
             />
           </div>
