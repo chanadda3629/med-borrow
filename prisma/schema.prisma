@@ -80,6 +80,7 @@ model EquipmentItem {
   equipmentCode        String                       @unique
   assetNumber          String                       @unique
   equipmentType        String
+  donorName            String?
   receivedDate         DateTime
   donorName            String?
   currentStatus        String

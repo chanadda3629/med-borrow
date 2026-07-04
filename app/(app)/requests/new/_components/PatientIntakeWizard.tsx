@@ -77,6 +77,10 @@ const STEPS = [
   "สรุปข้อมูล",
 ] as const
 
+// ─── Draft persistence ───────────────────────────────────────────────────────
+
+const DRAFT_KEY = "patient-intake-draft"
+
 // ─── Shared field-error helper ────────────────────────────────────────────────
 
 function FieldError({ message }: { message?: string }) {
@@ -203,6 +207,7 @@ function Step2Address() {
     register,
     setValue,
     watch,
+    clearErrors,
     formState: { errors },
   } = useFormContext<WizardFormValues>()
 
@@ -214,8 +219,9 @@ function Step2Address() {
       setValue("location.latitude", data.latitude)
       setValue("location.longitude", data.longitude)
       setValue("location.googleMapsUrl", data.googleMapsUrl)
+      clearErrors("location.latitude")
     },
-    [setValue]
+    [setValue, clearErrors]
   )
 
   const addrErrors = errors.address as Record<string, { message?: string }> | undefined
@@ -233,8 +239,13 @@ function Step2Address() {
           <FieldError message={addrErrors?.houseNumber?.message} />
         </div>
         <div>
-          <Label htmlFor="moo">หมู่ที่ (ถ้ามี)</Label>
-          <Input id="moo" placeholder="หมู่ 5" {...register("address.moo")} />
+          <Label htmlFor="moo">หมู่ที่</Label>
+          <Input
+            id="moo"
+            placeholder="หมู่ 5"
+            {...register("address.moo", { required: "กรุณากรอกหมู่ที่" })}
+          />
+          <FieldError message={addrErrors?.moo?.message} />
         </div>
       </div>
 
@@ -243,14 +254,17 @@ function Step2Address() {
       <div className="space-y-2">
         <Label>ปักหมุดที่อยู่บนแผนที่</Label>
         <p className="text-xs text-gray-500">แตะที่แผนที่เพื่อระบุตำแหน่งบ้านผู้ป่วย</p>
-        <LeafletMapPicker onPinChange={handlePinChange} />
+        <LeafletMapPicker initialLat={lat} initialLng={lng} onPinChange={handlePinChange} />
         {lat !== 0 && lng !== 0 && (
           <p className="text-xs text-green-600 font-medium">
             พิกัด: {lat.toFixed(6)}, {lng.toFixed(6)}
           </p>
         )}
         {errors.location?.latitude && (
-          <p className="text-red-600 text-xs">กรุณาปักหมุดตำแหน่งบนแผนที่</p>
+          <p className="text-red-600 text-xs">
+            {(errors.location.latitude as { message?: string }).message ??
+              "กรุณาปักหมุดตำแหน่งบนแผนที่"}
+          </p>
         )}
       </div>
     </div>
@@ -260,7 +274,12 @@ function Step2Address() {
 // ─── Step 3: Photos ───────────────────────────────────────────────────────────
 
 function Step3Photos() {
-  const { watch, setValue } = useFormContext<WizardFormValues>()
+  const {
+    watch,
+    setValue,
+    clearErrors,
+    formState: { errors },
+  } = useFormContext<WizardFormValues>()
   const patientPhotos = watch("patientPhotos") ?? []
   const homeEnvPhotos = watch("homeEnvironmentPhotos") ?? []
 
@@ -276,6 +295,7 @@ function Step3Photos() {
       updated.splice(index, 1)
     }
     setValue("patientPhotos", updated)
+    if (updated.length > 0) clearErrors("patientPhotos")
   }
 
   function handleHomePhotoChange(
@@ -289,13 +309,14 @@ function Step3Photos() {
       updated.splice(index, 1)
     }
     setValue("homeEnvironmentPhotos", updated)
+    if (updated.length > 0) clearErrors("homeEnvironmentPhotos")
   }
 
   return (
     <div className="space-y-6">
       <div>
         <Label>รูปภาพผู้ป่วย</Label>
-        <p className="text-xs text-gray-500 mb-3">อัปโหลดรูปภาพผู้ป่วย (สูงสุด 3 รูป)</p>
+        <p className="text-xs text-gray-500 mb-3">อัปโหลดรูปภาพผู้ป่วย (อย่างน้อย 1 รูป สูงสุด 3 รูป)</p>
         <div className="flex flex-wrap gap-3">
           {[0, 1, 2].map((i) => (
             <PhotoUploadField
@@ -306,12 +327,13 @@ function Step3Photos() {
             />
           ))}
         </div>
+        <FieldError message={(errors.patientPhotos as { message?: string } | undefined)?.message} />
       </div>
 
       <div>
         <Label>รูปภาพสภาพแวดล้อมบ้าน</Label>
         <p className="text-xs text-gray-500 mb-3">
-          ถ่ายรูปภายในบ้านเพื่อประกอบการพิจารณาอุปกรณ์ (สูงสุด 3 รูป)
+          ถ่ายรูปภายในบ้านเพื่อประกอบการพิจารณาอุปกรณ์ (อย่างน้อย 1 รูป สูงสุด 3 รูป)
         </p>
         <div className="flex flex-wrap gap-3">
           {[0, 1, 2].map((i) => (
@@ -323,6 +345,9 @@ function Step3Photos() {
             />
           ))}
         </div>
+        <FieldError
+          message={(errors.homeEnvironmentPhotos as { message?: string } | undefined)?.message}
+        />
       </div>
     </div>
   )
@@ -428,9 +453,11 @@ function Step4Assessment() {
         <Textarea
           id="chronicDiseases"
           placeholder="เช่น เบาหวาน, ความดันโลหิตสูง, มะเร็ง"
-          {...register("medicalAssessment.chronicDiseases")}
+          {...register("medicalAssessment.chronicDiseases", {
+            required: "กรุณากรอกโรคประจำตัว (ถ้าไม่มีให้พิมพ์ 'ไม่มี')",
+          })}
         />
-        <p className="text-xs text-gray-400 mt-1">ถ้าไม่มีสามารถเว้นว่างได้</p>
+        <FieldError message={assessErrors?.chronicDiseases?.message} />
       </div>
 
       <div>
@@ -480,13 +507,18 @@ interface AIRecommendationItem {
 }
 
 function Step5AIRecommend() {
-  const { watch, setValue } = useFormContext<WizardFormValues>()
+  const {
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext<WizardFormValues>()
   const [recommendations, setRecommendations] = useState<AIRecommendationItem[]>([])
   const [loading, setLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
 
   const selectedEquipment = watch("staffDecisionEquipmentType")
 
+  const gender = watch("gender")
   const walkingAbility = watch("medicalAssessment.walkingAbility")
   const selfCareAbility = watch("medicalAssessment.selfCareAbility")
   const patientCondition = watch("medicalAssessment.patientCondition")
@@ -511,6 +543,7 @@ function Step5AIRecommend() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           age,
+          gender,
           chronicDiseases,
           walkingAbility,
           selfCareAbility,
@@ -633,6 +666,7 @@ function Step5AIRecommend() {
         <Label htmlFor="staffDecisionEquipmentType">เลือกอุปกรณ์ด้วยตนเอง (Override)</Label>
         <Controller
           name="staffDecisionEquipmentType"
+          rules={{ required: "กรุณาเลือกอุปกรณ์" }}
           render={({ field }) => (
             <Select id="staffDecisionEquipmentType" {...field}>
               <option value="">-- เลือกอุปกรณ์ --</option>
@@ -642,6 +676,7 @@ function Step5AIRecommend() {
             </Select>
           )}
         />
+        <FieldError message={(errors.staffDecisionEquipmentType as { message?: string } | undefined)?.message} />
         <p className="text-xs text-gray-400 mt-1">
           เจ้าหน้าที่สามารถเลือกอุปกรณ์ที่แตกต่างจาก AI ได้
         </p>
@@ -801,13 +836,71 @@ export function PatientIntakeWizard() {
     mode: "onTouched",
   })
 
-  const { trigger, getValues } = methods
+  const { trigger, getValues, reset, watch, setError, clearErrors } = methods
 
-  // Fields to validate per step
+  // ── Draft persistence (localStorage) ──────────────────────────────────────
+  const stepRef = useRef(0)
+  stepRef.current = step
+
+  // Restore a saved draft on mount.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY)
+      if (!raw) return
+      const parsed = JSON.parse(raw) as { values?: WizardFormValues; step?: number }
+      if (parsed.values) reset(parsed.values)
+      if (typeof parsed.step === "number") setStep(Math.min(Math.max(parsed.step, 0), STEPS.length - 1))
+    } catch {
+      /* corrupt draft — ignore */
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Save the form (debounced) whenever any value changes.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const sub = watch((values) => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        try {
+          window.localStorage.setItem(
+            DRAFT_KEY,
+            JSON.stringify({ values, step: stepRef.current })
+          )
+        } catch {
+          /* quota / serialization — ignore */
+        }
+      }, 300)
+    })
+    return () => {
+      if (timer) clearTimeout(timer)
+      sub.unsubscribe()
+    }
+  }, [watch])
+
+  function clearDraft() {
+    try {
+      window.localStorage.removeItem(DRAFT_KEY)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function handleClearDraft() {
+    clearDraft()
+    reset()
+    setStep(0)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  // Fields to validate per step (string/enum/Controller fields).
+  // Photos and the map pin are non-input values validated manually below.
   const stepFields: Record<number, string[]> = {
     0: ["fullName", "nationalId", "dateOfBirth", "gender", "phoneNumber"],
     1: [
       "address.houseNumber",
+      "address.moo",
       "address.province",
       "address.district",
       "address.subdistrict",
@@ -819,10 +912,51 @@ export function PatientIntakeWizard() {
       "medicalAssessment.selfCareAbility",
       "medicalAssessment.patientCondition",
       "medicalAssessment.urgencyLevel",
+      "medicalAssessment.chronicDiseases",
       "medicalAssessment.checklistAnswers",
     ],
     4: ["staffDecisionEquipmentType"],
     5: [],
+  }
+
+  // Manual validation for values not bound to a native input.
+  function validateStepCustom(s: number): boolean {
+    if (s === 1) {
+      const { latitude, longitude } = getValues("location")
+      if (!latitude && !longitude) {
+        setError("location.latitude", {
+          type: "manual",
+          message: "กรุณาปักหมุดตำแหน่งบนแผนที่",
+        })
+        return false
+      }
+      clearErrors("location.latitude")
+    }
+    if (s === 2) {
+      let ok = true
+      const pp = getValues("patientPhotos")
+      const hp = getValues("homeEnvironmentPhotos")
+      if (!pp || pp.length === 0) {
+        setError("patientPhotos", {
+          type: "manual",
+          message: "กรุณาอัปโหลดรูปผู้ป่วยอย่างน้อย 1 รูป",
+        })
+        ok = false
+      } else {
+        clearErrors("patientPhotos")
+      }
+      if (!hp || hp.length === 0) {
+        setError("homeEnvironmentPhotos", {
+          type: "manual",
+          message: "กรุณาอัปโหลดรูปสภาพแวดล้อมบ้านอย่างน้อย 1 รูป",
+        })
+        ok = false
+      } else {
+        clearErrors("homeEnvironmentPhotos")
+      }
+      return ok
+    }
+    return true
   }
 
   async function handleNext() {
@@ -831,7 +965,8 @@ export function PatientIntakeWizard() {
       fields.length > 0
         ? await trigger(fields as Parameters<typeof trigger>[0])
         : true
-    if (valid) {
+    const customValid = validateStepCustom(step)
+    if (valid && customValid) {
       setStep((s) => Math.min(s + 1, STEPS.length - 1))
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
@@ -896,6 +1031,7 @@ export function PatientIntakeWizard() {
         return
       }
 
+      clearDraft()
       router.push(`/requests/${result.data.requestId}`)
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "เกิดข้อผิดพลาด กรุณาลองใหม่")
@@ -950,10 +1086,19 @@ export function PatientIntakeWizard() {
       </div>
 
       {/* Step content */}
-      <div className="p-4 pb-32">
-        <h2 className="text-base font-semibold text-gray-800 mb-4">
-          ขั้นตอนที่ {step + 1}: {STEPS[step]}
-        </h2>
+      <div className="p-4 pb-44">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-gray-800">
+            ขั้นตอนที่ {step + 1}: {STEPS[step]}
+          </h2>
+          <button
+            type="button"
+            onClick={handleClearDraft}
+            className="text-xs text-gray-400 hover:text-red-600 underline underline-offset-2"
+          >
+            เริ่มกรอกใหม่
+          </button>
+        </div>
         {stepComponents[step]}
       </div>
 
@@ -965,7 +1110,7 @@ export function PatientIntakeWizard() {
         </div>
       )}
 
-      {/* Navigation buttons — fixed above the global bottom tab bar (h-16) */}
+      {/* Navigation buttons — fixed above the app bottom tab bar (h-16) */}
       <div className="fixed bottom-16 left-0 right-0 z-50 bg-white border-t border-gray-200 p-4 flex gap-3 safe-area-inset-bottom">
         <Button
           type="button"

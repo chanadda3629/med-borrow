@@ -1,8 +1,26 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet"
-import type { LatLng } from "leaflet"
+import L, { type LatLng } from "leaflet"
 import "leaflet/dist/leaflet.css"
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png"
+import markerIcon from "leaflet/dist/images/marker-icon.png"
+import markerShadow from "leaflet/dist/images/marker-shadow.png"
+
+// Self-hosted default marker icon. Built once, synchronously, so the marker is
+// never created with the broken bundler URL (the classic invisible-marker bug).
+const pinIcon = L.icon({
+  iconRetinaUrl: markerIcon2x.src,
+  iconUrl: markerIcon.src,
+  shadowUrl: markerShadow.src,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+})
+
+// Chiang Mai — default map center when no pin has been chosen yet.
+const DEFAULT_CENTER: [number, number] = [18.7883, 98.9853]
 
 interface PinData {
   latitude: number
@@ -21,24 +39,20 @@ function ClickHandler({ onPin }: { onPin: (latlng: LatLng) => void }) {
   return null
 }
 
-export function LeafletMapPicker({ initialLat = 18.7883, initialLng = 98.9853, onPinChange }: LeafletMapPickerProps) {
-  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(
-    initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
-  )
-  const L = useRef<typeof import("leaflet") | null>(null)
+export function LeafletMapPicker({ initialLat, initialLng, onPinChange }: LeafletMapPickerProps) {
+  // Only seed a pin when a real (non-zero) coordinate is supplied (e.g. restored draft).
+  const hasInitial =
+    typeof initialLat === "number" &&
+    typeof initialLng === "number" &&
+    (initialLat !== 0 || initialLng !== 0)
 
-  useEffect(() => {
-    import("leaflet").then((mod) => {
-      L.current = mod.default
-      // Fix default icon
-      delete (mod.default.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl
-      mod.default.Icon.Default.mergeOptions({
-        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      })
-    })
-  }, [])
+  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(
+    hasInitial ? { lat: initialLat as number, lng: initialLng as number } : null
+  )
+
+  const center: [number, number] = hasInitial
+    ? [initialLat as number, initialLng as number]
+    : DEFAULT_CENTER
 
   async function handlePin(latlng: LatLng) {
     const { lat, lng } = latlng
@@ -61,8 +75,8 @@ export function LeafletMapPicker({ initialLat = 18.7883, initialLng = 98.9853, o
   return (
     <div className="h-64 w-full rounded-lg overflow-hidden border border-gray-300">
       <MapContainer
-        center={[initialLat, initialLng]}
-        zoom={13}
+        center={center}
+        zoom={hasInitial ? 16 : 13}
         className="h-full w-full"
         style={{ zIndex: 0 }}
       >
@@ -71,7 +85,7 @@ export function LeafletMapPicker({ initialLat = 18.7883, initialLng = 98.9853, o
           attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
         <ClickHandler onPin={handlePin} />
-        {pin && <Marker position={[pin.lat, pin.lng]} />}
+        {pin && <Marker icon={pinIcon} position={[pin.lat, pin.lng]} />}
       </MapContainer>
       {pin && (
         <p className="text-xs text-gray-500 mt-1">

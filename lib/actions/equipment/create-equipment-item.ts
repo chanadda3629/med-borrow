@@ -6,6 +6,7 @@ interface CreateItemInput {
   equipmentCode: string
   assetNumber: string
   equipmentType: string
+  donorName?: string
   receivedDate: string
   donorName?: string
 }
@@ -19,6 +20,7 @@ export async function createEquipmentItem(input: CreateItemInput) {
         equipmentCode: input.equipmentCode,
         assetNumber: input.assetNumber,
         equipmentType: input.equipmentType,
+        donorName: input.donorName?.trim() || null,
         receivedDate: new Date(input.receivedDate),
         donorName: donorName ? donorName : null,
         currentStatus: "พร้อมใช้งาน",

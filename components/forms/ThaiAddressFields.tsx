@@ -10,6 +10,10 @@ export function ThaiAddressFields() {
   const province = watch("address.province")
   const district = watch("address.district")
 
+  const addrErrors = errors.address as
+    | Record<string, { message?: string } | undefined>
+    | undefined
+
   const [provinces, setProvinces] = useState<string[]>([])
   const [districts, setDistricts] = useState<string[]>([])
   const [subdistricts, setSubdistricts] = useState<string[]>([])
@@ -62,29 +66,35 @@ export function ThaiAddressFields() {
       <div>
         <Label htmlFor="province">จังหวัด</Label>
         <Controller name="address.province" control={control}
+          rules={{ required: "กรุณาเลือกจังหวัด" }}
           render={({ field }) => (
             <Select {...field} id="province">
               <option value="">-- เลือกจังหวัด --</option>
               {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
             </Select>
           )} />
-        {errors.address && (errors.address as { province?: { message?: string } }).province && (
-          <p className="text-red-600 text-xs mt-1">{(errors.address as { province?: { message?: string } }).province?.message}</p>
+        {addrErrors?.province?.message && (
+          <p className="text-red-600 text-xs mt-1">{addrErrors.province.message}</p>
         )}
       </div>
       <div>
         <Label htmlFor="district">อำเภอ/เขต</Label>
         <Controller name="address.district" control={control}
+          rules={{ required: "กรุณาเลือกอำเภอ" }}
           render={({ field }) => (
             <Select {...field} id="district" disabled={!province}>
               <option value="">-- เลือกอำเภอ --</option>
               {districts.map((d) => <option key={d} value={d}>{d}</option>)}
             </Select>
           )} />
+        {addrErrors?.district?.message && (
+          <p className="text-red-600 text-xs mt-1">{addrErrors.district.message}</p>
+        )}
       </div>
       <div>
         <Label htmlFor="subdistrict">ตำบล/แขวง</Label>
         <Controller name="address.subdistrict" control={control}
+          rules={{ required: "กรุณาเลือกตำบล" }}
           render={({ field }) => (
             <Select {...field} id="subdistrict" disabled={!district}
               onChange={(e) => { field.onChange(e); void handleSubdistrictChange(e.target.value) }}>
@@ -92,13 +102,20 @@ export function ThaiAddressFields() {
               {subdistricts.map((s) => <option key={s} value={s}>{s}</option>)}
             </Select>
           )} />
+        {addrErrors?.subdistrict?.message && (
+          <p className="text-red-600 text-xs mt-1">{addrErrors.subdistrict.message}</p>
+        )}
       </div>
       <div>
         <Label htmlFor="postalCode">รหัสไปรษณีย์</Label>
         <Controller name="address.postalCode" control={control}
+          rules={{ required: "กรุณาเลือกตำบลเพื่อระบุรหัสไปรษณีย์" }}
           render={({ field }) => (
             <Input {...field} id="postalCode" maxLength={5} placeholder="00000" readOnly className="bg-gray-50" />
           )} />
+        {addrErrors?.postalCode?.message && (
+          <p className="text-red-600 text-xs mt-1">{addrErrors.postalCode.message}</p>
+        )}
       </div>
     </div>
   )

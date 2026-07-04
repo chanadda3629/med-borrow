@@ -8,5 +8,5 @@ const LeafletHeatMap = dynamic(
 )
 
 export function HeatMapSection({ points }: { points: { lat: number; lng: number }[] }) {
-  return <LeafletHeatMap points={points} />
+  return <LeafletHeatMap points={points} satellite locateUser />
 }

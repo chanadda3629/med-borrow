@@ -6,9 +6,19 @@ import { z } from "zod"
 const bodySchema = medicalAssessmentSchema.extend({ gender: z.string().min(1) })
 
 export async function POST(request: NextRequest) {
+  // Validate first — a bad request body is a 400, not a 500.
+  let data: z.infer<typeof bodySchema>
   try {
     const body = await request.json()
-    const data = bodySchema.parse(body)
+    data = bodySchema.parse(body)
+  } catch (err) {
+    const message =
+      err instanceof z.ZodError ? "ข้อมูลไม่ครบถ้วนสำหรับการวิเคราะห์" : "คำขอไม่ถูกต้อง"
+    return NextResponse.json({ error: message }, { status: 400 })
+  }
+
+  // The AI call itself — failures here are 500.
+  try {
     const result = await getAIRecommendation({
       age: data.age, gender: data.gender, chronicDiseases: data.chronicDiseases,
       checklistAnswers: data.checklistAnswers, urgencyLevel: data.urgencyLevel,
@@ -17,6 +27,9 @@ export async function POST(request: NextRequest) {
     })
     return NextResponse.json(result)
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "ไม่สามารถรับคำแนะนำได้" }, { status: 500 })
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "ไม่สามารถรับคำแนะนำได้" },
+      { status: 500 }
+    )
   }
 }

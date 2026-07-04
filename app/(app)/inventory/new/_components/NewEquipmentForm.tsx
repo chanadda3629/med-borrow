@@ -20,6 +20,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
   const [equipmentCode, setEquipmentCode] = useState("")
   const [assetNumber, setAssetNumber] = useState("")
   const [equipmentType, setEquipmentType] = useState("")
+  const [donorName, setDonorName] = useState("")
   const [receivedDate, setReceivedDate] = useState("")
   const [donorName, setDonorName] = useState("")
 
@@ -38,6 +39,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
         equipmentCode: equipmentCode.trim(),
         assetNumber: assetNumber.trim(),
         equipmentType,
+        donorName: donorName.trim() || undefined,
         receivedDate,
         donorName: donorName.trim(),
       })
@@ -94,6 +96,17 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
                 </option>
               ))}
             </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="donorName">ชื่อผู้บริจาค (ถ้ามี)</Label>
+            <Input
+              id="donorName"
+              value={donorName}
+              onChange={(e) => setDonorName(e.target.value)}
+              placeholder="เช่น คุณสมชาย ใจดี"
+              disabled={loading}
+            />
           </div>
 
           <div className="space-y-1.5">
