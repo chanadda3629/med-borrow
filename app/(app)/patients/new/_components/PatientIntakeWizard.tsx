@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +16,7 @@ import { Progress } from "@/components/ui/progress"
 import { ThaiAddressFields } from "@/components/forms/ThaiAddressFields"
 import { PhotoUploadField } from "@/components/forms/PhotoUploadField"
 import { createPatient } from "@/lib/actions/patients/create-patient"
+import { formatThaiDate } from "@/lib/utils/format-thai-date"
 import { EQUIPMENT_TYPES, CHECKLIST_OPTIONS, WALKING_ABILITIES, SELF_CARE_ABILITIES } from "@/lib/domain/constants"
 import type { EquipmentType, AIRecommendationResult } from "@/lib/domain/schemas"
 import {
@@ -180,11 +182,21 @@ function Step1Personal() {
 
         <div>
           <RequiredLabel icon={CalendarDays} htmlFor="dateOfBirth">วันเกิด</RequiredLabel>
-          <Input
-            id="dateOfBirth"
-            type="date"
-            max={new Date().toISOString().split("T")[0]}
-            {...register("dateOfBirth", { required: "กรุณาเลือกวันเกิด" })}
+          <Controller
+            name="dateOfBirth"
+            control={control}
+            rules={{ required: "กรุณาเลือกวันเกิด" }}
+            render={({ field }) => (
+              <DatePicker
+                id="dateOfBirth"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                max={new Date().toISOString().split("T")[0]}
+                hasError={!!errors.dateOfBirth}
+                placeholder="เลือกวันเกิด"
+              />
+            )}
           />
           <FieldError message={errors.dateOfBirth?.message} />
         </div>
@@ -738,7 +750,10 @@ function Step6Summary() {
         <CardContent className="space-y-1 text-sm">
           <Row label="ชื่อ-นามสกุล" value={values.fullName} />
           <Row label="เลขบัตรประชาชน" value={values.nationalId} />
-          <Row label="วันเกิด" value={values.dateOfBirth} />
+          <Row
+            label="วันเกิด"
+            value={values.dateOfBirth ? formatThaiDate(new Date(values.dateOfBirth)) : ""}
+          />
           <Row label="อายุ" value={`${values.age} ปี`} />
           <Row label="เพศ" value={values.gender} />
           <Row label="เบอร์โทร" value={values.phoneNumber} />
