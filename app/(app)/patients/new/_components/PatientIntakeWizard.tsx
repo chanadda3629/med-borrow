@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, type ComponentType } from "react"
 import { useForm, FormProvider, Controller, useFormContext } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
@@ -17,7 +17,20 @@ import { PhotoUploadField } from "@/components/forms/PhotoUploadField"
 import { createPatient } from "@/lib/actions/patients/create-patient"
 import { EQUIPMENT_TYPES, CHECKLIST_OPTIONS, WALKING_ABILITIES, SELF_CARE_ABILITIES } from "@/lib/domain/constants"
 import type { EquipmentType, AIRecommendationResult } from "@/lib/domain/schemas"
-import { ChevronLeft, ChevronRight, Check, Loader2, AlertCircle } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Loader2,
+  AlertCircle,
+  User,
+  IdCard,
+  CalendarDays,
+  Users,
+  Phone,
+  Home,
+  MapPinned,
+} from "lucide-react"
 
 // Dynamic import of the map to avoid SSR issues with Leaflet
 const LeafletMapPicker = dynamic(
@@ -84,6 +97,25 @@ function FieldError({ message }: { message?: string }) {
   return <p className="text-red-600 text-xs mt-1">{message}</p>
 }
 
+// Marks a field as required with a red asterisk, consistent across the form.
+function RequiredLabel({
+  icon: Icon,
+  htmlFor,
+  children,
+}: {
+  icon: ComponentType<{ className?: string }>
+  htmlFor: string
+  children: React.ReactNode
+}) {
+  return (
+    <Label htmlFor={htmlFor} className="flex items-center gap-1.5">
+      <Icon className="w-4 h-4 text-gray-400" />
+      {children}
+      <span className="text-red-500">*</span>
+    </Label>
+  )
+}
+
 // ─── Step 1: Personal Info ────────────────────────────────────────────────────
 
 function Step1Personal() {
@@ -110,89 +142,104 @@ function Step1Personal() {
   }, [dob, setValue])
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Label htmlFor="fullName">ชื่อ-นามสกุล</Label>
-        <Input
-          id="fullName"
-          placeholder="กรอกชื่อ-นามสกุล"
-          {...register("fullName", { required: "กรุณากรอกชื่อ-นามสกุล" })}
-        />
-        <FieldError message={errors.fullName?.message} />
-      </div>
+    <Card className="rounded-2xl">
+      <CardContent className="p-5 space-y-5">
+        <div>
+          <p className="text-xs font-medium text-gray-400 tracking-wide uppercase">
+            ข้อมูลผู้ป่วย
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            กรุณากรอกข้อมูลที่มีเครื่องหมาย <span className="text-red-500">*</span> ให้ครบถ้วนและถูกต้อง
+          </p>
+        </div>
 
-      <div>
-        <Label htmlFor="nationalId">เลขบัตรประชาชน (13 หลัก)</Label>
-        <Input
-          id="nationalId"
-          placeholder="0000000000000"
-          maxLength={13}
-          inputMode="numeric"
-          {...register("nationalId", {
-            required: "กรุณากรอกเลขบัตรประชาชน",
-            pattern: { value: /^\d{13}$/, message: "เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก" },
-          })}
-        />
-        <FieldError message={errors.nationalId?.message} />
-      </div>
+        <div>
+          <RequiredLabel icon={User} htmlFor="fullName">ชื่อ-นามสกุล</RequiredLabel>
+          <Input
+            id="fullName"
+            placeholder="กรอกชื่อ-นามสกุล"
+            {...register("fullName", { required: "กรุณากรอกชื่อ-นามสกุล" })}
+          />
+          <FieldError message={errors.fullName?.message} />
+        </div>
 
-      <div>
-        <Label htmlFor="dateOfBirth">วันเกิด</Label>
-        <Input
-          id="dateOfBirth"
-          type="date"
-          {...register("dateOfBirth", { required: "กรุณาเลือกวันเกิด" })}
-        />
-        <FieldError message={errors.dateOfBirth?.message} />
-      </div>
+        <div>
+          <RequiredLabel icon={IdCard} htmlFor="nationalId">เลขบัตรประชาชน (13 หลัก)</RequiredLabel>
+          <Input
+            id="nationalId"
+            placeholder="0000000000000"
+            maxLength={13}
+            inputMode="numeric"
+            {...register("nationalId", {
+              required: "กรุณากรอกเลขบัตรประชาชน",
+              pattern: { value: /^\d{13}$/, message: "เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก" },
+            })}
+          />
+          <FieldError message={errors.nationalId?.message} />
+        </div>
 
-      <div>
-        <Label htmlFor="age">อายุ (คำนวณอัตโนมัติ)</Label>
-        <Input
-          id="age"
-          type="number"
-          readOnly
-          className="bg-gray-50"
-          {...register("age")}
-        />
-      </div>
+        <div>
+          <RequiredLabel icon={CalendarDays} htmlFor="dateOfBirth">วันเกิด</RequiredLabel>
+          <Input
+            id="dateOfBirth"
+            type="date"
+            max={new Date().toISOString().split("T")[0]}
+            {...register("dateOfBirth", { required: "กรุณาเลือกวันเกิด" })}
+          />
+          <FieldError message={errors.dateOfBirth?.message} />
+        </div>
 
-      <div>
-        <Label htmlFor="gender">เพศ</Label>
-        <Controller
-          name="gender"
-          control={control}
-          rules={{ required: "กรุณาเลือกเพศ" }}
-          render={({ field }) => (
-            <Select id="gender" {...field}>
-              <option value="">-- เลือกเพศ --</option>
-              <option value="ชาย">ชาย</option>
-              <option value="หญิง">หญิง</option>
-              <option value="อื่น ๆ">อื่น ๆ</option>
-            </Select>
-          )}
-        />
-        <FieldError message={errors.gender?.message} />
-      </div>
+        <div>
+          <Label htmlFor="age" className="flex items-center gap-1.5">
+            <CalendarDays className="w-4 h-4 text-gray-400" />
+            อายุ (คำนวณอัตโนมัติ)
+          </Label>
+          <Input
+            id="age"
+            type="number"
+            readOnly
+            className="bg-gray-50"
+            {...register("age")}
+          />
+        </div>
 
-      <div>
-        <Label htmlFor="phoneNumber">เบอร์โทรศัพท์ (10 หลัก)</Label>
-        <Input
-          id="phoneNumber"
-          placeholder="08x-xxx-xxxx"
-          maxLength={10}
-          inputMode="numeric"
-          {...register("phoneNumber", {
-            required: "กรุณากรอกเบอร์โทรศัพท์",
-            pattern: {
-              value: /^0(?:6|8|9)\d{8}$/,
-              message: "เบอร์โทรศัพท์ต้องเป็นเบอร์มือถือไทยที่ถูกต้อง",
-            },
-          })}
-        />
-        <FieldError message={errors.phoneNumber?.message} />
-      </div>
-    </div>
+        <div>
+          <RequiredLabel icon={Users} htmlFor="gender">เพศ</RequiredLabel>
+          <Controller
+            name="gender"
+            control={control}
+            rules={{ required: "กรุณาเลือกเพศ" }}
+            render={({ field }) => (
+              <Select id="gender" {...field}>
+                <option value="">-- เลือกเพศ --</option>
+                <option value="ชาย">ชาย</option>
+                <option value="หญิง">หญิง</option>
+                <option value="อื่น ๆ">อื่น ๆ</option>
+              </Select>
+            )}
+          />
+          <FieldError message={errors.gender?.message} />
+        </div>
+
+        <div>
+          <RequiredLabel icon={Phone} htmlFor="phoneNumber">เบอร์โทรศัพท์ (10 หลัก)</RequiredLabel>
+          <Input
+            id="phoneNumber"
+            placeholder="08x-xxx-xxxx"
+            maxLength={10}
+            inputMode="numeric"
+            {...register("phoneNumber", {
+              required: "กรุณากรอกเบอร์โทรศัพท์",
+              pattern: {
+                value: /^0(?:6|8|9)\d{8}$/,
+                message: "เบอร์โทรศัพท์ต้องเป็นเบอร์มือถือไทยที่ถูกต้อง",
+              },
+            })}
+          />
+          <FieldError message={errors.phoneNumber?.message} />
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -222,37 +269,56 @@ function Step2Address() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label htmlFor="houseNumber">บ้านเลขที่</Label>
-          <Input
-            id="houseNumber"
-            placeholder="123/4"
-            {...register("address.houseNumber", { required: "กรุณากรอกบ้านเลขที่" })}
-          />
-          <FieldError message={addrErrors?.houseNumber?.message} />
-        </div>
-        <div>
-          <Label htmlFor="moo">หมู่ที่ (ถ้ามี)</Label>
-          <Input id="moo" placeholder="หมู่ 5" {...register("address.moo")} />
-        </div>
-      </div>
+      <Card className="rounded-2xl">
+        <CardContent className="p-5 space-y-5">
+          <div>
+            <p className="text-xs font-medium text-gray-400 tracking-wide uppercase">
+              ที่อยู่ผู้ป่วย
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              กรุณากรอกข้อมูลที่มีเครื่องหมาย <span className="text-red-500">*</span> ให้ครบถ้วนและถูกต้อง
+            </p>
+          </div>
 
-      <ThaiAddressFields />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <RequiredLabel icon={Home} htmlFor="houseNumber">บ้านเลขที่</RequiredLabel>
+              <Input
+                id="houseNumber"
+                placeholder="123/4"
+                {...register("address.houseNumber", { required: "กรุณากรอกบ้านเลขที่" })}
+              />
+              <FieldError message={addrErrors?.houseNumber?.message} />
+            </div>
+            <div>
+              <Label htmlFor="moo">หมู่ที่ (ถ้ามี)</Label>
+              <Input id="moo" placeholder="หมู่ 5" {...register("address.moo")} />
+            </div>
+          </div>
 
-      <div className="space-y-2">
-        <Label>ปักหมุดที่อยู่บนแผนที่</Label>
-        <p className="text-xs text-gray-500">แตะที่แผนที่เพื่อระบุตำแหน่งบ้านผู้ป่วย</p>
-        <LeafletMapPicker onPinChange={handlePinChange} />
-        {lat !== 0 && lng !== 0 && (
-          <p className="text-xs text-green-600 font-medium">
-            พิกัด: {lat.toFixed(6)}, {lng.toFixed(6)}
+          <ThaiAddressFields />
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl">
+        <CardContent className="p-5 space-y-2">
+          <Label className="flex items-center gap-1.5">
+            <MapPinned className="w-4 h-4 text-gray-400" />
+            ปักหมุดที่อยู่บนแผนที่
+          </Label>
+          <p className="text-xs text-gray-500">
+            ค้นหาสถานที่ แตะที่แผนที่ หรือกดปุ่มค้นหาตำแหน่งของฉันเพื่อระบุตำแหน่งบ้านผู้ป่วย
           </p>
-        )}
-        {errors.location?.latitude && (
-          <p className="text-red-600 text-xs">กรุณาปักหมุดตำแหน่งบนแผนที่</p>
-        )}
-      </div>
+          <LeafletMapPicker
+            initialLat={lat || undefined}
+            initialLng={lng || undefined}
+            onPinChange={handlePinChange}
+          />
+          {errors.location?.latitude && (
+            <p className="text-red-600 text-xs">กรุณาปักหมุดตำแหน่งบนแผนที่</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

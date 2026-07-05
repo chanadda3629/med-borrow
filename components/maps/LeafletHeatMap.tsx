@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet"
+import { LocateFixed, Loader2 } from "lucide-react"
 import "leaflet/dist/leaflet.css"
 
 interface HeatPoint { lat: number; lng: number }
@@ -52,6 +53,25 @@ function HeatLayer({ points }: { points: HeatPoint[] }) {
 function UserLocation() {
   const map = useMap()
   const [position, setPosition] = useState<[number, number] | null>(null)
+  const [status, setStatus] = useState<"idle" | "locating" | "error">("idle")
+
+  function locate() {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return
+    setStatus("locating")
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude]
+        setPosition(coords)
+        map.setView(coords, 16)
+        setStatus("idle")
+      },
+      (err) => {
+        console.warn("ไม่สามารถเข้าถึงตำแหน่งของคุณได้", err.message)
+        setStatus("error")
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
 
   useEffect(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) return
@@ -61,21 +81,45 @@ function UserLocation() {
         setPosition(coords)
         map.setView(coords, 16)
       },
-      (err) => {
-        console.warn("ไม่สามารถเข้าถึงตำแหน่งของคุณได้", err.message)
-      }
+      (err) => console.warn("ไม่สามารถเข้าถึงตำแหน่งของคุณได้", err.message),
+      { enableHighAccuracy: true, timeout: 10000 }
     )
-  }, [map])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
-  if (!position) return null
   return (
-    <CircleMarker
-      center={position}
-      radius={8}
-      pathOptions={{ color: "#fff", weight: 2, fillColor: "#2563eb", fillOpacity: 1 }}
-    >
-      <Tooltip>ตำแหน่งของคุณ</Tooltip>
-    </CircleMarker>
+    <>
+      <div className="leaflet-top leaflet-right" style={{ marginTop: 58 }}>
+        <div className="leaflet-bar leaflet-control">
+          <button
+            type="button"
+            onClick={locate}
+            title="ค้นหาตำแหน่งของฉัน"
+            className="flex h-[30px] w-[30px] items-center justify-center bg-white text-gray-700 hover:bg-gray-100"
+          >
+            {status === "locating" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <LocateFixed className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+        {status === "error" && (
+          <div className="leaflet-control mt-1 rounded bg-white px-2 py-1 text-xs text-red-600 shadow">
+            หาตำแหน่งไม่สำเร็จ
+          </div>
+        )}
+      </div>
+      {position && (
+        <CircleMarker
+          center={position}
+          radius={8}
+          pathOptions={{ color: "#fff", weight: 2, fillColor: "#2563eb", fillOpacity: 1 }}
+        >
+          <Tooltip>ตำแหน่งของคุณ</Tooltip>
+        </CircleMarker>
+      )}
+    </>
   )
 }
 
@@ -93,6 +137,7 @@ export function LeafletHeatMap({ points, center = [13.7563, 100.5018], zoom = 7 
           url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
           attribution="Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics"
         />
+        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" />
         <HeatLayer points={points} />
         <UserLocation />
       </MapContainer>

@@ -1,14 +1,42 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ComponentType } from "react"
 import { Controller, useFormContext } from "react-hook-form"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { MapPin, Building2, Milestone, Mail } from "lucide-react"
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null
+  return <p className="text-red-600 text-xs mt-1">{message}</p>
+}
+
+function RequiredLabel({
+  icon: Icon,
+  htmlFor,
+  children,
+}: {
+  icon: ComponentType<{ className?: string }>
+  htmlFor: string
+  children: React.ReactNode
+}) {
+  return (
+    <Label htmlFor={htmlFor} className="flex items-center gap-1.5">
+      <Icon className="w-4 h-4 text-gray-400" />
+      {children}
+      <span className="text-red-500">*</span>
+    </Label>
+  )
+}
 
 export function ThaiAddressFields() {
   const { control, watch, setValue, formState: { errors } } = useFormContext()
   const province = watch("address.province")
   const district = watch("address.district")
+
+  const addrErrors = errors.address as
+    | Record<string, { message?: string } | undefined>
+    | undefined
 
   const [provinces, setProvinces] = useState<string[]>([])
   const [districts, setDistricts] = useState<string[]>([])
@@ -60,31 +88,33 @@ export function ThaiAddressFields() {
   return (
     <div className="space-y-3">
       <div>
-        <Label htmlFor="province">จังหวัด</Label>
+        <RequiredLabel icon={MapPin} htmlFor="province">จังหวัด</RequiredLabel>
         <Controller name="address.province" control={control}
+          rules={{ required: "กรุณาเลือกจังหวัด" }}
           render={({ field }) => (
             <Select {...field} id="province">
               <option value="">-- เลือกจังหวัด --</option>
               {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
             </Select>
           )} />
-        {errors.address && (errors.address as { province?: { message?: string } }).province && (
-          <p className="text-red-600 text-xs mt-1">{(errors.address as { province?: { message?: string } }).province?.message}</p>
-        )}
+        <FieldError message={addrErrors?.province?.message} />
       </div>
       <div>
-        <Label htmlFor="district">อำเภอ/เขต</Label>
+        <RequiredLabel icon={Building2} htmlFor="district">อำเภอ/เขต</RequiredLabel>
         <Controller name="address.district" control={control}
+          rules={{ required: "กรุณาเลือกอำเภอ/เขต" }}
           render={({ field }) => (
             <Select {...field} id="district" disabled={!province}>
               <option value="">-- เลือกอำเภอ --</option>
               {districts.map((d) => <option key={d} value={d}>{d}</option>)}
             </Select>
           )} />
+        <FieldError message={addrErrors?.district?.message} />
       </div>
       <div>
-        <Label htmlFor="subdistrict">ตำบล/แขวง</Label>
+        <RequiredLabel icon={Milestone} htmlFor="subdistrict">ตำบล/แขวง</RequiredLabel>
         <Controller name="address.subdistrict" control={control}
+          rules={{ required: "กรุณาเลือกตำบล/แขวง" }}
           render={({ field }) => (
             <Select {...field} id="subdistrict" disabled={!district}
               onChange={(e) => { field.onChange(e); void handleSubdistrictChange(e.target.value) }}>
@@ -92,13 +122,16 @@ export function ThaiAddressFields() {
               {subdistricts.map((s) => <option key={s} value={s}>{s}</option>)}
             </Select>
           )} />
+        <FieldError message={addrErrors?.subdistrict?.message} />
       </div>
       <div>
-        <Label htmlFor="postalCode">รหัสไปรษณีย์</Label>
+        <RequiredLabel icon={Mail} htmlFor="postalCode">รหัสไปรษณีย์</RequiredLabel>
         <Controller name="address.postalCode" control={control}
+          rules={{ required: "กรุณาเลือกตำบล/แขวงเพื่อระบุรหัสไปรษณีย์" }}
           render={({ field }) => (
             <Input {...field} id="postalCode" maxLength={5} placeholder="00000" readOnly className="bg-gray-50" />
           )} />
+        <FieldError message={addrErrors?.postalCode?.message} />
       </div>
     </div>
   )
