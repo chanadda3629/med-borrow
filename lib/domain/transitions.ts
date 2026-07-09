@@ -35,27 +35,29 @@ const EQUIPMENT_STATUS_TRANSITIONS: Record<
 export function getNextBorrowWorkflowStatuses(
   status: BorrowWorkflowStatus,
 ): readonly BorrowWorkflowStatus[] {
-  return BORROW_WORKFLOW_TRANSITIONS[status];
+  // `?? []` guards against unknown/legacy stored statuses (e.g. English codes)
+  // so callers like the detail page don't crash on `.filter(undefined)`.
+  return BORROW_WORKFLOW_TRANSITIONS[status] ?? [];
 }
 
 export function canTransitionBorrowWorkflowStatus(
   fromStatus: BorrowWorkflowStatus,
   toStatus: BorrowWorkflowStatus,
 ): boolean {
-  return BORROW_WORKFLOW_TRANSITIONS[fromStatus].includes(toStatus);
+  return BORROW_WORKFLOW_TRANSITIONS[fromStatus]?.includes(toStatus) ?? false;
 }
 
 export function getNextEquipmentStatuses(
   status: EquipmentStatus,
 ): readonly EquipmentStatus[] {
-  return EQUIPMENT_STATUS_TRANSITIONS[status];
+  return EQUIPMENT_STATUS_TRANSITIONS[status] ?? [];
 }
 
 export function canTransitionEquipmentStatus(
   fromStatus: EquipmentStatus,
   toStatus: EquipmentStatus,
 ): boolean {
-  return EQUIPMENT_STATUS_TRANSITIONS[fromStatus].includes(toStatus);
+  return EQUIPMENT_STATUS_TRANSITIONS[fromStatus]?.includes(toStatus) ?? false;
 }
 
 export function canAssignEquipmentItem(

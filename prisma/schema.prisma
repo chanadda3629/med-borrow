@@ -45,36 +45,34 @@ model Patient {
 }
 
 model MedicalAssessment {
-  id                 String   @id @default(cuid())
-  patientId          String   @unique
-  age                Int
-  chronicDiseases    String[] @default([])
-  walkingAbility     String
-  selfCareAbility    String
-  patientCondition   String
-  urgencyLevel       String
-  checklistAnswers   String[] @default([])
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  patient            Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id               String   @id @default(cuid())
+  patientId        String   @unique
+  age              Int
+  chronicDiseases  String[] @default([])
+  walkingAbility   String
+  selfCareAbility  String
+  patientCondition String
+  urgencyLevel     String
+  checklistAnswers String[] @default([])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  patient          Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
 }
 
 model MediaAsset {
-  id                  String    @id @default(cuid())
-  kind                String
-  url                 String
-  publicId            String?
-  altText             String?
-  patientId           String?
-  borrowingRequestId   String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  patient             Patient?           @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  borrowingRequest    BorrowingRequest?  @relation(fields: [borrowingRequestId], references: [id], onDelete: Cascade)
+  id                 String            @id @default(cuid())
+  kind               String
+  url                String
+  publicId           String?
+  altText            String?
+  patientId          String?
+  borrowingRequestId String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  borrowingRequest   BorrowingRequest? @relation(fields: [borrowingRequestId], references: [id], onDelete: Cascade)
+  patient            Patient?          @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   @@index([kind])
   @@index([patientId])
@@ -82,64 +80,61 @@ model MediaAsset {
 }
 
 model EquipmentItem {
-  id                   String                     @id @default(cuid())
+  id                   String                       @id @default(cuid())
   equipmentId          String
-  equipmentCode        String                     @unique
-  assetNumber          String                     @unique
+  equipmentCode        String                       @unique
+  assetNumber          String                       @unique
   equipmentType        String
-  receivedDate         DateTime
   donorName            String?
+  receivedDate         DateTime
   currentStatus        String
-  currentLoanRequestId String?                    @unique
-  createdAt            DateTime                   @default(now())
-  updatedAt            DateTime                   @updatedAt
-
-  currentLoanRequest   BorrowingRequest?         @relation("CurrentLoanRequest", fields: [currentLoanRequestId], references: [id], onDelete: SetNull)
-  borrowingRequests    BorrowingRequest[]        @relation("AssignedEquipmentItem")
-  borrowReturnRecords   BorrowingReturn[]         @relation("BorrowingReturnEquipmentItem")
-  statusHistory        EquipmentItemStatusHistory[]
+  currentLoanRequestId String?                      @unique
+  createdAt            DateTime                     @default(now())
+  updatedAt            DateTime                     @updatedAt
+  borrowingRequests    BorrowingRequest[]           @relation("AssignedEquipmentItem")
+  borrowReturnRecords  BorrowingReturn[]            @relation("BorrowingReturnEquipmentItem")
+  currentLoanRequest   BorrowingRequest?            @relation("CurrentLoanRequest", fields: [currentLoanRequestId], references: [id])
   returnHistory        EquipmentItemReturnHistory[]
+  statusHistory        EquipmentItemStatusHistory[]
 
   @@index([equipmentType])
   @@index([currentStatus])
 }
 
 model EquipmentItemStatusHistory {
-  id                String       @id @default(cuid())
-  equipmentItemId   String
-  fromStatus        String
-  toStatus          String
-  changedAt         DateTime     @default(now())
-  changedByUserId   String?
-  note              String?
-
-  equipmentItem     EquipmentItem @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
+  id              String        @id @default(cuid())
+  equipmentItemId String
+  fromStatus      String
+  toStatus        String
+  changedAt       DateTime      @default(now())
+  changedByUserId String?
+  note            String?
+  equipmentItem   EquipmentItem @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
 
   @@index([equipmentItemId, changedAt])
 }
 
 model BorrowingRequest {
-  id                      String                 @id @default(cuid())
-  requestNumber           String                 @unique
-  patientId               String
+  id                       String                          @id @default(cuid())
+  requestNumber            String                          @unique
+  patientId                String
   requestedEquipmentType   String
   aiRecommendationResult   Json?
   assignedEquipmentItemId  String?
-  workflowStatus          String
-  approvalDecision        String?
-  deliveryStatus          String?
-  dueOrReturnDate         DateTime?
-  createdAt               DateTime               @default(now())
-  updatedAt               DateTime               @updatedAt
-
-  patient                 Patient                @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  assignedEquipmentItem   EquipmentItem?         @relation("AssignedEquipmentItem", fields: [assignedEquipmentItemId], references: [id], onDelete: SetNull)
-  currentLoanRequest      EquipmentItem?         @relation("CurrentLoanRequest")
-  statusHistory           BorrowingRequestStatusHistory[]
-  returnRecord            BorrowingReturn?       @relation("BorrowingRequestReturn")
-  notificationHistory     NotificationHistory[]
-  mediaAssets             MediaAsset[]
+  workflowStatus           String
+  approvalDecision         String?
+  deliveryStatus           String?
+  dueOrReturnDate          DateTime?
+  createdAt                DateTime                        @default(now())
+  updatedAt                DateTime                        @updatedAt
+  assignedEquipmentItem    EquipmentItem?                  @relation("AssignedEquipmentItem", fields: [assignedEquipmentItemId], references: [id])
+  patient                  Patient                         @relation(fields: [patientId], references: [id])
+  statusHistory            BorrowingRequestStatusHistory[]
+  returnRecord             BorrowingReturn?                @relation("BorrowingRequestReturn")
+  currentLoanRequest       EquipmentItem?                  @relation("CurrentLoanRequest")
   equipmentReturnHistories EquipmentItemReturnHistory[]
+  mediaAssets              MediaAsset[]
+  notificationHistory      NotificationHistory[]
 
   @@index([patientId, workflowStatus])
   @@index([assignedEquipmentItemId])
@@ -154,67 +149,63 @@ model BorrowingRequestStatusHistory {
   changedAt       DateTime         @default(now())
   changedByUserId String?
   note            String?
-
-  request         BorrowingRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  request         BorrowingRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@index([requestId, changedAt])
 }
 
 model BorrowingReturn {
-  id                    String             @id @default(cuid())
-  requestId             String             @unique
-  equipmentItemId       String
-  returnDate           DateTime
-  receivingStaffName   String
-  condition            String
-  damageNote           String?
-  equipmentPhotoUrl     String
+  id                     String           @id @default(cuid())
+  requestId              String           @unique
+  equipmentItemId        String
+  returnDate             DateTime
+  receivingStaffName     String
+  condition              String
+  damageNote             String?
+  equipmentPhotoUrl      String
   equipmentPhotoPublicId String?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-
-  request              BorrowingRequest   @relation("BorrowingRequestReturn", fields: [requestId], references: [id], onDelete: Cascade)
-  equipmentItem        EquipmentItem      @relation("BorrowingReturnEquipmentItem", fields: [equipmentItemId], references: [id], onDelete: Restrict)
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  equipmentItem          EquipmentItem    @relation("BorrowingReturnEquipmentItem", fields: [equipmentItemId], references: [id])
+  request                BorrowingRequest @relation("BorrowingRequestReturn", fields: [requestId], references: [id], onDelete: Cascade)
 
   @@index([equipmentItemId, returnDate])
 }
 
 model EquipmentItemReturnHistory {
-  id                    String           @id @default(cuid())
-  equipmentItemId       String
-  requestId             String?
-  condition            String
-  returnDate           DateTime
-  receivingStaffName   String
-  damageNote           String?
-  equipmentPhotoUrl     String
+  id                     String            @id @default(cuid())
+  equipmentItemId        String
+  requestId              String?
+  condition              String
+  returnDate             DateTime
+  receivingStaffName     String
+  damageNote             String?
+  equipmentPhotoUrl      String
   equipmentPhotoPublicId String?
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-
-  equipmentItem        EquipmentItem     @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
-  request              BorrowingRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  equipmentItem          EquipmentItem     @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)
+  request                BorrowingRequest? @relation(fields: [requestId], references: [id])
 
   @@index([equipmentItemId, returnDate])
 }
 
 model NotificationHistory {
-  id                   String           @id @default(cuid())
-  patientId            String?
-  requestId            String?
-  channelType          String
-  channelValue         String
-  trigger              String
-  deliveryStatus       String
-  message              String
-  triggeredAt         DateTime
-  deliveredAt         DateTime?
-  errorMessage        String?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-
-  patient             Patient?         @relation(fields: [patientId], references: [id], onDelete: SetNull)
-  request             BorrowingRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  id             String            @id @default(cuid())
+  patientId      String?
+  requestId      String?
+  channelType    String
+  channelValue   String
+  trigger        String
+  deliveryStatus String
+  message        String
+  triggeredAt    DateTime
+  deliveredAt    DateTime?
+  errorMessage   String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  patient        Patient?          @relation(fields: [patientId], references: [id])
+  request        BorrowingRequest? @relation(fields: [requestId], references: [id])
 
   @@index([trigger, deliveryStatus])
   @@index([patientId, requestId])

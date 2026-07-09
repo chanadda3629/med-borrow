@@ -7,9 +7,13 @@ import {
 } from "@/lib/domain/transitions"
 import type { BorrowWorkflowStatus } from "@/lib/domain/schemas"
 import { aiRecommendationResultSchema } from "@/lib/domain/schemas"
-import { BORROW_WORKFLOW_STATUSES } from "@/lib/domain/constants"
+import {
+  toThaiWorkflowStatus,
+  toThaiEquipmentType,
+  toThaiEquipmentStatus,
+} from "@/lib/domain/labels"
+import { formatThaiDateTime } from "@/lib/format"
 import { getSession } from "@/lib/auth/get-session"
-import { formatThaiDateTime } from "@/lib/utils/format-thai-date"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { WorkflowStatusStepper } from "@/components/shared/WorkflowStatusStepper"
@@ -24,7 +28,7 @@ import {
   TableCell,
 } from "@/components/ui/table"
 import { WorkflowActions } from "./_components/WorkflowActions"
-import { AdminStatusOverride } from "./_components/AdminStatusOverride"
+import { StatusOverride } from "./_components/StatusOverride"
 
 interface PageProps {
   params: Promise<{ requestId: string }>
@@ -47,7 +51,9 @@ export default async function RequestDetailPage({ params }: PageProps) {
   const session = await getSession()
   const isAdmin = session.user.role === "ADMIN"
 
-  const currentStatus = request.workflowStatus as BorrowWorkflowStatus
+  // Normalize legacy/external English codes to the canonical Thai status so the
+  // stepper, transition logic, and badges all work (and don't crash on unknowns).
+  const currentStatus = toThaiWorkflowStatus(request.workflowStatus) as BorrowWorkflowStatus
   const nextStatuses = getNextBorrowWorkflowStatuses(currentStatus)
   const isTerminal = isBorrowWorkflowTerminal(currentStatus)
 
@@ -94,7 +100,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
               label="ที่อยู่"
               value={`${request.patient.houseNumber} ${request.patient.subdistrict} ${request.patient.district} ${request.patient.province} ${request.patient.postalCode}`}
             />
-            <Row label="ประเภทอุปกรณ์ที่ขอ" value={request.requestedEquipmentType} />
+            <Row label="ประเภทอุปกรณ์ที่ขอ" value={toThaiEquipmentType(request.requestedEquipmentType)} />
           </CardContent>
         </Card>
 
@@ -145,13 +151,13 @@ export default async function RequestDetailPage({ params }: PageProps) {
             <CardContent className="space-y-2">
               <Row label="หมายเลขครุภัณฑ์" value={request.assignedEquipmentItem.assetNumber} />
               <Row label="รหัสอุปกรณ์" value={request.assignedEquipmentItem.equipmentCode} />
-              <Row label="ประเภท" value={request.assignedEquipmentItem.equipmentType} />
+              <Row label="ประเภท" value={toThaiEquipmentType(request.assignedEquipmentItem.equipmentType)} />
               <Row label="ผู้บริจาค" value={request.assignedEquipmentItem.donorName ?? "-"} />
               <Row
                 label="สถานะ"
                 value={
                   <StatusBadge
-                    status={request.assignedEquipmentItem.currentStatus}
+                    status={toThaiEquipmentStatus(request.assignedEquipmentItem.currentStatus)}
                     type="equipment"
                   />
                 }
@@ -193,10 +199,14 @@ export default async function RequestDetailPage({ params }: PageProps) {
                   request.statusHistory.map((h) => (
                     <TableRow key={h.id}>
                       <TableCell>
-                        <StatusBadge status={h.fromStatus} type="workflow" />
+                        {h.fromStatus ? (
+                          <StatusBadge status={toThaiWorkflowStatus(h.fromStatus)} type="workflow" />
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={h.toStatus} type="workflow" />
+                        <StatusBadge status={toThaiWorkflowStatus(h.toStatus)} type="workflow" />
                       </TableCell>
                       <TableCell className="text-xs text-gray-500">
                         {formatThaiDateTime(h.changedAt)}
@@ -238,18 +248,14 @@ export default async function RequestDetailPage({ params }: PageProps) {
           </Card>
         )}
 
-        {/* Admin status override */}
+        {/* Admin status override — set any status, bypassing ordered rules */}
         {isAdmin && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">ปรับสถานะ (แอดมิน)</CardTitle>
+              <CardTitle className="text-base">เปลี่ยนสถานะ (แอดมิน)</CardTitle>
             </CardHeader>
             <CardContent>
-              <AdminStatusOverride
-                requestId={requestId}
-                currentStatus={currentStatus}
-                allStatuses={BORROW_WORKFLOW_STATUSES}
-              />
+              <StatusOverride requestId={requestId} currentStatus={currentStatus} />
             </CardContent>
           </Card>
         )}

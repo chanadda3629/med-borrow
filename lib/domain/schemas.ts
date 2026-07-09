@@ -137,6 +137,7 @@ export const equipmentItemSchema = z.object({
   equipmentCode: z.string().trim().min(1),
   assetNumber: z.string().trim().min(1),
   equipmentType: equipmentTypeSchema,
+  donorName: z.string().trim().min(1).optional(),
   receivedDate: z.coerce.date(),
   currentStatus: equipmentStatusSchema,
   currentLoanRequestId: z.string().trim().min(1).nullable().optional(),

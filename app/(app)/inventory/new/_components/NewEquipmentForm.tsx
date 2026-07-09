@@ -20,8 +20,8 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
   const [equipmentCode, setEquipmentCode] = useState("")
   const [assetNumber, setAssetNumber] = useState("")
   const [equipmentType, setEquipmentType] = useState("")
-  const [receivedDate, setReceivedDate] = useState("")
   const [donorName, setDonorName] = useState("")
+  const [receivedDate, setReceivedDate] = useState("")
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -38,8 +38,8 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
         equipmentCode: equipmentCode.trim(),
         assetNumber: assetNumber.trim(),
         equipmentType,
+        donorName: donorName.trim() || undefined,
         receivedDate,
-        donorName: donorName.trim(),
       })
 
       if (!result.success) {
@@ -97,23 +97,23 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="receivedDate">วันที่รับเข้าคลัง</Label>
-            <Input
-              id="receivedDate"
-              type="date"
-              value={receivedDate}
-              onChange={(e) => setReceivedDate(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-
-          <div className="space-y-1.5">
             <Label htmlFor="donorName">ชื่อผู้บริจาค (ถ้ามี)</Label>
             <Input
               id="donorName"
               value={donorName}
               onChange={(e) => setDonorName(e.target.value)}
               placeholder="เช่น คุณสมชาย ใจดี"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="receivedDate">วันที่รับเข้าคลัง</Label>
+            <Input
+              id="receivedDate"
+              type="date"
+              value={receivedDate}
+              onChange={(e) => setReceivedDate(e.target.value)}
               disabled={loading}
             />
           </div>

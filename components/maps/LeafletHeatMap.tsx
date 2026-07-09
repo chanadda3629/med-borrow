@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
-import { MapContainer, TileLayer, CircleMarker, Tooltip, useMap } from "react-leaflet"
-import { LocateFixed, Loader2 } from "lucide-react"
+import { MapContainer, TileLayer, useMap } from "react-leaflet"
+import { MapPin } from "lucide-react"
 import "leaflet/dist/leaflet.css"
 
 interface HeatPoint { lat: number; lng: number }
@@ -50,97 +50,126 @@ function HeatLayer({ points }: { points: HeatPoint[] }) {
   return null
 }
 
-function UserLocation() {
+/**
+ * Requests the user's location on mount. On success: recenters on the user and
+ * drops a "you are here" dot. On denial/error: falls back to fitting the patient
+ * points (or leaves the default center). Geolocation needs a secure context
+ * (HTTPS or localhost) — degrades silently otherwise. Exposes a `locate()`
+ * trigger via onLocate so a button can re-request the location.
+ */
+function LocateUser({
+  points,
+  onLocate,
+}: {
+  points: HeatPoint[]
+  onLocate?: (locate: () => void) => void
+}) {
   const map = useMap()
-  const [position, setPosition] = useState<[number, number] | null>(null)
-  const [status, setStatus] = useState<"idle" | "locating" | "error">("idle")
-
-  function locate() {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return
-    setStatus("locating")
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude]
-        setPosition(coords)
-        map.setView(coords, 16)
-        setStatus("idle")
-      },
-      (err) => {
-        console.warn("ไม่สามารถเข้าถึงตำแหน่งของคุณได้", err.message)
-        setStatus("error")
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    )
-  }
 
   useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const coords: [number, number] = [pos.coords.latitude, pos.coords.longitude]
-        setPosition(coords)
-        map.setView(coords, 16)
-      },
-      (err) => console.warn("ไม่สามารถเข้าถึงตำแหน่งของคุณได้", err.message),
-      { enableHighAccuracy: true, timeout: 10000 }
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    let marker: { remove: () => void } | null = null
+    let cancelled = false
 
-  return (
-    <>
-      <div className="leaflet-top leaflet-right" style={{ marginTop: 58 }}>
-        <div className="leaflet-bar leaflet-control">
-          <button
-            type="button"
-            onClick={locate}
-            title="ค้นหาตำแหน่งของฉัน"
-            className="flex h-[30px] w-[30px] items-center justify-center bg-white text-gray-700 hover:bg-gray-100"
-          >
-            {status === "locating" ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <LocateFixed className="h-4 w-4" />
-            )}
-          </button>
-        </div>
-        {status === "error" && (
-          <div className="leaflet-control mt-1 rounded bg-white px-2 py-1 text-xs text-red-600 shadow">
-            หาตำแหน่งไม่สำเร็จ
-          </div>
-        )}
-      </div>
-      {position && (
-        <CircleMarker
-          center={position}
-          radius={8}
-          pathOptions={{ color: "#fff", weight: 2, fillColor: "#2563eb", fillOpacity: 1 }}
-        >
-          <Tooltip>ตำแหน่งของคุณ</Tooltip>
-        </CircleMarker>
-      )}
-    </>
-  )
+    const run = import("leaflet").then((mod) => {
+      const L = mod.default
+
+      const fallback = () => {
+        if (points.length > 0) {
+          map.fitBounds(L.latLngBounds(points.map((p) => [p.lat, p.lng])), { padding: [40, 40] })
+        }
+      }
+
+      const locate = () => {
+        if (typeof navigator === "undefined" || !navigator.geolocation) {
+          fallback()
+          return
+        }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (cancelled) return
+            const { latitude, longitude } = pos.coords
+            map.setView([latitude, longitude], 15)
+            marker?.remove()
+            marker = L.circleMarker([latitude, longitude], {
+              radius: 9,
+              color: "#ffffff",
+              weight: 3,
+              fillColor: "#2563eb",
+              fillOpacity: 1,
+            })
+              .addTo(map)
+              .bindTooltip("คุณอยู่ที่นี่", { direction: "top" })
+          },
+          () => { if (!cancelled) fallback() },
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+        )
+      }
+
+      onLocate?.(locate)
+      locate()
+    })
+
+    return () => {
+      cancelled = true
+      run.then(() => marker?.remove())
+    }
+  }, [map, points, onLocate])
+
+  return null
 }
 
 interface LeafletHeatMapProps {
   points: HeatPoint[]
   center?: [number, number]
   zoom?: number
+  satellite?: boolean
+  locateUser?: boolean
 }
 
-export function LeafletHeatMap({ points, center = [13.7563, 100.5018], zoom = 7 }: LeafletHeatMapProps) {
+export function LeafletHeatMap({
+  points,
+  center = [13.7563, 100.5018],
+  zoom = 7,
+  satellite = false,
+  locateUser = false,
+}: LeafletHeatMapProps) {
+  const [locate, setLocate] = useState<(() => void) | null>(null)
+
   return (
-    <div className="h-80 w-full rounded-lg overflow-hidden border border-gray-200">
+    <div className="relative h-80 w-full rounded-lg overflow-hidden border border-gray-200">
       <MapContainer center={center} zoom={zoom} className="h-full w-full" style={{ zIndex: 0 }}>
-        <TileLayer
-          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-          attribution="Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics"
-        />
-        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}" />
+        {satellite ? (
+          <>
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution="Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics"
+              maxZoom={19}
+            />
+            <TileLayer
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+              maxZoom={19}
+            />
+          </>
+        ) : (
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          />
+        )}
         <HeatLayer points={points} />
-        <UserLocation />
+        {locateUser && <LocateUser points={points} onLocate={(fn) => setLocate(() => fn)} />}
       </MapContainer>
+
+      {locateUser && (
+        <button
+          type="button"
+          onClick={() => locate?.()}
+          className="absolute top-2 right-2 z-[400] flex items-center gap-1 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm border border-gray-200 hover:bg-white"
+        >
+          <MapPin className="h-3.5 w-3.5" />
+          ตำแหน่งฉัน
+        </button>
+      )}
     </div>
   )
 }
