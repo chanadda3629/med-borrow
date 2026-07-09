@@ -1,41 +1,78 @@
 import { db } from "@/lib/db"
 import { sendLinePushMessage } from "./line-client"
 
-type Trigger =
+export type Trigger =
   | "request-submitted" | "approved" | "rejected"
   | "preparing-delivery" | "delivery-completed"
   | "return-due-soon" | "returned"
 
-const TEMPLATES: Record<Trigger, (name: string) => string> = {
-  "request-submitted": (n) => `ระบบได้รับคำร้องขอยืมอุปกรณ์ของ ${n} เรียบร้อยแล้ว`,
-  "approved": (n) => `คำร้องขอยืมอุปกรณ์ของ ${n} ได้รับการอนุมัติแล้ว`,
-  "rejected": (n) => `คำร้องขอยืมอุปกรณ์ของ ${n} ไม่ได้รับการอนุมัติ`,
-  "preparing-delivery": (n) => `กำลังเตรียมจัดส่งอุปกรณ์ให้ ${n}`,
-  "delivery-completed": (n) => `จัดส่งอุปกรณ์ให้ ${n} สำเร็จแล้ว`,
-  "return-due-soon": (n) => `อุปกรณ์ของ ${n} ใกล้ถึงกำหนดคืน`,
-  "returned": (n) => `รับคืนอุปกรณ์ของ ${n} เรียบร้อยแล้ว`,
+type TemplateContext = {
+  name: string
+  equipmentType: string
+  dueOrReturnDate: Date | null
 }
 
-export async function sendLineNotification(requestId: string, trigger: Trigger): Promise<void> {
+function daysRemaining(date: Date): number {
+  return Math.ceil((date.getTime() - Date.now()) / 86400000)
+}
+
+function formatThaiDate(date: Date): string {
+  return date.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" })
+}
+
+const TEMPLATES: Record<Trigger, (ctx: TemplateContext) => string> = {
+  "request-submitted": ({ name }) => `ระบบได้รับคำร้องขอยืมอุปกรณ์ของ ${name} เรียบร้อยแล้ว`,
+  "approved": ({ name }) => `คำร้องขอยืมอุปกรณ์ของ ${name} ได้รับการอนุมัติแล้ว`,
+  "rejected": ({ name }) => `คำร้องขอยืมอุปกรณ์ของ ${name} ไม่ได้รับการอนุมัติ`,
+  "preparing-delivery": ({ name, equipmentType, dueOrReturnDate }) =>
+    dueOrReturnDate
+      ? `กำลังเตรียมจัดส่ง${equipmentType}ให้คุณ ${name} คาดว่าจะจัดส่งเสร็จภายใน ${daysRemaining(dueOrReturnDate)} วัน`
+      : `กำลังเตรียมจัดส่ง${equipmentType}ให้คุณ ${name}`,
+  "delivery-completed": ({ name, equipmentType }) => `จัดส่ง${equipmentType}ให้คุณ ${name} สำเร็จแล้ว`,
+  "return-due-soon": ({ name, equipmentType, dueOrReturnDate }) =>
+    dueOrReturnDate
+      ? `แจ้งเตือน: กำหนดคืน${equipmentType}ของท่านคือวันที่ ${formatThaiDate(dueOrReturnDate)} (อีก ${daysRemaining(dueOrReturnDate)} วัน)`
+      : `อุปกรณ์ของ ${name} ใกล้ถึงกำหนดคืน`,
+  "returned": ({ name, equipmentType }) => `รับคืน${equipmentType}ของ ${name} เรียบร้อยแล้ว`,
+}
+
+export async function sendLineNotification(requestId: string, trigger: Trigger): Promise<boolean> {
   const request = await db.borrowingRequest.findUnique({
     where: { id: requestId },
-    include: { patient: { select: { id: true, fullName: true, phoneNumber: true } } },
+    include: {
+      patient: { select: { id: true, fullName: true, lineUserId: true } },
+      assignedEquipmentItem: { select: { equipmentType: true } },
+    },
   })
   if (!request) throw new Error(`Request ${requestId} not found`)
 
-  const message = TEMPLATES[trigger](request.patient.fullName)
-  const channelValue = request.patient.phoneNumber
+  const message = TEMPLATES[trigger]({
+    name: request.patient.fullName,
+    equipmentType: request.assignedEquipmentItem?.equipmentType ?? request.requestedEquipmentType,
+    dueOrReturnDate: request.dueOrReturnDate,
+  })
+  const channelValue = request.patient.lineUserId
   const triggeredAt = new Date()
+
+  if (!channelValue) {
+    await db.notificationHistory.create({
+      data: { patientId: request.patientId, requestId, channelType: "line-id",
+        channelValue: "", trigger, deliveryStatus: "failed", message, triggeredAt,
+        errorMessage: "ยังไม่ได้เชื่อมต่อ LINE" },
+    })
+    return false
+  }
 
   try {
     await sendLinePushMessage(channelValue, message)
     await db.notificationHistory.create({
-      data: { patientId: request.patientId, requestId, channelType: "phone",
+      data: { patientId: request.patientId, requestId, channelType: "line-id",
         channelValue, trigger, deliveryStatus: "sent", message, triggeredAt, deliveredAt: new Date() },
     })
+    return true
   } catch (error) {
     await db.notificationHistory.create({
-      data: { patientId: request.patientId, requestId, channelType: "phone",
+      data: { patientId: request.patientId, requestId, channelType: "line-id",
         channelValue, trigger, deliveryStatus: "failed", message, triggeredAt,
         errorMessage: error instanceof Error ? error.message : "Unknown error" },
     })

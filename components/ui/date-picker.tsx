@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const THAI_MONTHS = [
@@ -10,6 +10,90 @@ const THAI_MONTHS = [
 ]
 
 const THAI_WEEKDAYS = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"]
+
+const WHEEL_ITEM_HEIGHT = 40
+const WHEEL_VISIBLE_COUNT = 5
+const WHEEL_SIDE_COUNT = Math.floor(WHEEL_VISIBLE_COUNT / 2)
+
+interface WheelItem {
+  value: number
+  label: string
+}
+
+function WheelColumn({
+  items,
+  value,
+  onChange,
+  className,
+}: {
+  items: WheelItem[]
+  value: number
+  onChange: (value: number) => void
+  className?: string
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const mountedRef = useRef(false)
+  const selectedIndex = Math.max(0, items.findIndex((item) => item.value === value))
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const target = selectedIndex * WHEEL_ITEM_HEIGHT
+    if (!mountedRef.current) {
+      el.scrollTop = target
+      mountedRef.current = true
+      return
+    }
+    if (Math.abs(el.scrollTop - target) > 1) {
+      el.scrollTo({ top: target, behavior: "smooth" })
+    }
+  }, [selectedIndex])
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
+
+  function handleScroll() {
+    const el = ref.current
+    if (!el) return
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => {
+      const nearest = Math.round(el.scrollTop / WHEEL_ITEM_HEIGHT)
+      const clamped = Math.min(items.length - 1, Math.max(0, nearest))
+      el.scrollTo({ top: clamped * WHEEL_ITEM_HEIGHT, behavior: "smooth" })
+      const next = items[clamped]?.value
+      if (next !== undefined && next !== value) onChange(next)
+    }, 120)
+  }
+
+  return (
+    <div
+      ref={ref}
+      onScroll={handleScroll}
+      className={cn("no-scrollbar overflow-y-auto", className)}
+      style={{ height: WHEEL_ITEM_HEIGHT * WHEEL_VISIBLE_COUNT, scrollSnapType: "y mandatory" }}
+    >
+      <div style={{ height: WHEEL_ITEM_HEIGHT * WHEEL_SIDE_COUNT }} />
+      {items.map((item) => (
+        <div
+          key={item.value}
+          onClick={() => onChange(item.value)}
+          className={cn(
+            "flex items-center justify-center select-none cursor-pointer transition-all duration-150",
+            item.value === value ? "text-gray-900 font-semibold text-[17px]" : "text-gray-400 text-[15px]"
+          )}
+          style={{ height: WHEEL_ITEM_HEIGHT, scrollSnapAlign: "center" }}
+        >
+          {item.label}
+        </div>
+      ))}
+      <div style={{ height: WHEEL_ITEM_HEIGHT * WHEEL_SIDE_COUNT }} />
+    </div>
+  )
+}
 
 interface ParsedDate {
   year: number
@@ -63,6 +147,9 @@ export function DatePicker({
   hasError,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false)
+  const [wheelOpen, setWheelOpen] = useState(false)
+  const [tempMonth, setTempMonth] = useState(0)
+  const [tempYear, setTempYear] = useState(0)
   const selected = useMemo(() => parseISODate(value), [value])
   const today = useMemo(() => {
     const now = new Date()
@@ -81,6 +168,7 @@ export function DatePicker({
     }
     setViewYear(selected?.year ?? maxParsed?.year ?? today.year)
     setViewMonth(selected?.month ?? maxParsed?.month ?? today.month)
+    setWheelOpen(false)
     setOpen(true)
   }
 
@@ -88,13 +176,29 @@ export function DatePicker({
     if (!open) return
     function handleKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
+        if (wheelOpen) {
+          setWheelOpen(false)
+          return
+        }
         setOpen(false)
         onBlur?.()
       }
     }
     document.addEventListener("keydown", handleKey)
     return () => document.removeEventListener("keydown", handleKey)
-  }, [open, onBlur])
+  }, [open, wheelOpen, onBlur])
+
+  function handleOpenWheel() {
+    setTempMonth(viewMonth)
+    setTempYear(viewYear)
+    setWheelOpen(true)
+  }
+
+  function handleConfirmWheel() {
+    setViewMonth(tempMonth)
+    setViewYear(tempYear)
+    setWheelOpen(false)
+  }
 
   const years = useMemo(() => {
     const latest = maxParsed?.year ?? today.year
@@ -103,6 +207,15 @@ export function DatePicker({
     for (let y = latest; y >= earliest; y--) list.push(y)
     return list
   }, [maxParsed?.year, minParsed?.year, today.year])
+
+  const monthItems = useMemo<WheelItem[]>(
+    () => THAI_MONTHS.map((m, i) => ({ value: i, label: m })),
+    []
+  )
+  const yearItems = useMemo<WheelItem[]>(
+    () => years.map((y) => ({ value: y, label: String(y + 543) })),
+    [years]
+  )
 
   const cells = useMemo<DayCell[]>(() => {
     const result: DayCell[] = []
@@ -193,103 +306,142 @@ export function DatePicker({
             if (e.target === e.currentTarget) handleClose()
           }}
         >
-          <div className="w-full sm:w-[340px] bg-white rounded-t-3xl sm:rounded-2xl shadow-xl p-4 pb-6 sm:pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <button
-                type="button"
-                onClick={goPrevMonth}
-                className="h-9 w-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
-                aria-label="เดือนก่อนหน้า"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-
-              <div className="flex items-center gap-1">
-                <select
-                  value={viewMonth}
-                  onChange={(e) => setViewMonth(Number(e.target.value))}
-                  className="appearance-none bg-transparent px-1.5 py-1 rounded-md text-base font-semibold text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {THAI_MONTHS.map((m, i) => (
-                    <option key={m} value={i}>{m}</option>
-                  ))}
-                </select>
-                <select
-                  value={viewYear}
-                  onChange={(e) => setViewYear(Number(e.target.value))}
-                  className="appearance-none bg-transparent px-1.5 py-1 rounded-md text-base font-semibold text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {years.map((y) => (
-                    <option key={y} value={y}>{y + 543}</option>
-                  ))}
-                </select>
-              </div>
-
-              <button
-                type="button"
-                onClick={goNextMonth}
-                className="h-9 w-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
-                aria-label="เดือนถัดไป"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-7">
-              {THAI_WEEKDAYS.map((d) => (
-                <div key={d} className="h-8 flex items-center justify-center text-xs font-medium text-gray-400">
-                  {d}
+          <div className="w-full sm:w-[340px] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl p-4 pb-6 sm:pb-4 overflow-hidden">
+            {wheelOpen ? (
+              <div className="flex flex-col">
+                <div className="text-center text-sm font-medium text-gray-400 pb-2">
+                  เลือกเดือนและปีเกิด
                 </div>
-              ))}
-            </div>
 
-            <div className="grid grid-cols-7 gap-y-1">
-              {cells.map((cell, idx) => {
-                const disabled = isDisabled(cell)
-                const sel = selected ? sameDate(cell, selected) : false
-                const isToday = sameDate(cell, today)
-                return (
-                  <div key={idx} className="flex items-center justify-center">
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => handleSelectDay(cell)}
-                      className={cn(
-                        "h-9 w-9 flex items-center justify-center rounded-full text-sm transition-colors",
-                        !cell.isCurrentMonth && "text-gray-300",
-                        cell.isCurrentMonth && !disabled && "text-gray-700",
-                        !disabled && !sel && "hover:bg-gray-100",
-                        disabled && "text-gray-200 cursor-not-allowed",
-                        isToday && !sel && "ring-1 ring-inset ring-blue-400 text-blue-600 font-semibold",
-                        sel && "bg-blue-600 text-white font-semibold"
-                      )}
-                    >
-                      {cell.day}
-                    </button>
+                <div className="relative">
+                  <div
+                    className="pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 rounded-xl border-y border-blue-100 bg-blue-50/60"
+                    style={{ height: WHEEL_ITEM_HEIGHT }}
+                  />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-12 bg-gradient-to-b from-white to-transparent" />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-12 bg-gradient-to-t from-white to-transparent" />
+
+                  <div className="relative z-[1] flex">
+                    <WheelColumn
+                      items={monthItems}
+                      value={tempMonth}
+                      onChange={setTempMonth}
+                      className="flex-[1.4]"
+                    />
+                    <WheelColumn
+                      items={yearItems}
+                      value={tempYear}
+                      onChange={setTempYear}
+                      className="flex-1"
+                    />
                   </div>
-                )
-              })}
-            </div>
+                </div>
 
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={handleClear}
-                className="text-sm font-medium text-gray-500 px-2 py-1.5 rounded-lg hover:bg-gray-50 hover:text-gray-700"
-              >
-                ล้าง
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setViewYear(today.year)
-                  setViewMonth(today.month)
-                }}
-                className="text-sm font-medium text-blue-600 px-2 py-1.5 rounded-lg hover:bg-blue-50"
-              >
-                วันนี้
-              </button>
-            </div>
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setWheelOpen(false)}
+                    className="text-sm font-medium text-gray-500 px-3 py-2 rounded-lg hover:bg-gray-50 hover:text-gray-700"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmWheel}
+                    className="text-sm font-semibold text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50"
+                  >
+                    ตกลง
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    type="button"
+                    onClick={goPrevMonth}
+                    className="h-9 w-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
+                    aria-label="เดือนก่อนหน้า"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleOpenWheel}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-base font-semibold text-gray-900 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                  >
+                    {THAI_MONTHS[viewMonth]} {viewYear + 543}
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={goNextMonth}
+                    className="h-9 w-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
+                    aria-label="เดือนถัดไป"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-7">
+                  {THAI_WEEKDAYS.map((d) => (
+                    <div key={d} className="h-8 flex items-center justify-center text-xs font-medium text-gray-400">
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-y-1">
+                  {cells.map((cell, idx) => {
+                    const disabled = isDisabled(cell)
+                    const sel = selected ? sameDate(cell, selected) : false
+                    const isToday = sameDate(cell, today)
+                    return (
+                      <div key={idx} className="flex items-center justify-center">
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => handleSelectDay(cell)}
+                          className={cn(
+                            "h-9 w-9 flex items-center justify-center rounded-full text-sm transition-colors",
+                            !cell.isCurrentMonth && "text-gray-300",
+                            cell.isCurrentMonth && !disabled && "text-gray-700",
+                            !disabled && !sel && "hover:bg-gray-100",
+                            disabled && "text-gray-200 cursor-not-allowed",
+                            isToday && !sel && "ring-1 ring-inset ring-blue-400 text-blue-600 font-semibold",
+                            sel && "bg-blue-600 text-white font-semibold"
+                          )}
+                        >
+                          {cell.day}
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="text-sm font-medium text-gray-500 px-2 py-1.5 rounded-lg hover:bg-gray-50 hover:text-gray-700"
+                  >
+                    ล้าง
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewYear(today.year)
+                      setViewMonth(today.month)
+                    }}
+                    className="text-sm font-medium text-blue-600 px-2 py-1.5 rounded-lg hover:bg-blue-50"
+                  >
+                    วันนี้
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

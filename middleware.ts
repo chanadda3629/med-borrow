@@ -9,9 +9,10 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
   const isAuthPage = nextUrl.pathname === "/login"
   const isApiAuth = nextUrl.pathname.startsWith("/api/auth")
+  const isLineWebhook = nextUrl.pathname.startsWith("/api/line/")
   const isStatic = /\.(json|png|ico|svg|jpg|webp)$/.test(nextUrl.pathname)
 
-  if (isApiAuth || isStatic) return NextResponse.next()
+  if (isApiAuth || isLineWebhook || isStatic) return NextResponse.next()
   if (!isLoggedIn && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", nextUrl))
   }

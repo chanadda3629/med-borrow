@@ -199,6 +199,8 @@ const patientData = [
     selfCareAbility: "needs_assistance",
     patientCondition: "ผู้ป่วยไม่สามารถเดินได้ ต้องใช้รถเข็นในการเคลื่อนที่ มีโรคประจำตัวเบาหวานและความดัน",
     urgencyLevel: "สูง",
+    lineUserId: "Udemo0001aaaaaaaaaaaaaaaaaaaaaaa",
+    lineLinkedAt: new Date("2026-04-01"),
     createdAt: new Date("2026-04-01"),
   },
   {
@@ -799,6 +801,11 @@ const notificationData = [
   { patientId: "patient-008", requestId: "req-008", channelType: "line-id", channelValue: "theerapat_r1960", trigger: "request-submitted", deliveryStatus: "failed", message: "คำร้องขอยืมไม้เท้า (BR-2026-0008) ได้รับการบันทึกแล้ว", triggeredAt: new Date("2026-06-21"), deliveredAt: null, errorMessage: "LINE user not found — invalid LINE ID" },
 ];
 
+const lineMessageData = [
+  { patientId: "patient-001", direction: "inbound", senderType: "patient", body: "สวัสดีค่ะ อยากสอบถามว่ารถเข็นต้องคืนวันไหนคะ", createdAt: new Date("2026-05-10T09:00:00") },
+  { patientId: "patient-001", direction: "outbound", senderType: "staff", body: "สวัสดีค่ะ กำหนดคืนคือวันที่ 15 พฤษภาคม 2569 นะคะ", deliveryStatus: "sent", createdAt: new Date("2026-05-10T09:05:00") },
+];
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -898,6 +905,12 @@ async function main() {
     await prisma.notificationHistory.create({ data: n });
   }
   console.log(`    ✓ ${notificationData.length} notifications`);
+
+  console.log("🌱  Seeding LINE chat messages...");
+  for (const m of lineMessageData) {
+    await prisma.lineMessage.create({ data: m });
+  }
+  console.log(`    ✓ ${lineMessageData.length} chat messages`);
 
   console.log("\n✅  Seed complete.");
   console.log("\n📋  Login credentials:");

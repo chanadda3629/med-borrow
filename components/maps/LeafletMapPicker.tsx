@@ -110,7 +110,11 @@ function LocateMeControl({ onLocate }: { onLocate: (lat: number, lng: number, zo
   )
 }
 
-export function LeafletMapPicker({ initialLat = 18.7883, initialLng = 98.9853, onPinChange }: LeafletMapPickerProps) {
+// Bangkok — used only as a neutral fallback if the browser has no initial pin and geolocation fails/is denied.
+const FALLBACK_LAT = 13.7563
+const FALLBACK_LNG = 100.5018
+
+export function LeafletMapPicker({ initialLat = FALLBACK_LAT, initialLng = FALLBACK_LNG, onPinChange }: LeafletMapPickerProps) {
   const hasInitialPin = Boolean(initialLat && initialLng)
   const [pin, setPin] = useState<{ lat: number; lng: number } | null>(
     hasInitialPin ? { lat: initialLat, lng: initialLng } : null
@@ -119,6 +123,18 @@ export function LeafletMapPicker({ initialLat = 18.7883, initialLng = 98.9853, o
   const [isResolvingAddress, setIsResolvingAddress] = useState(false)
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; zoom: number } | null>(null)
   const [pinIcon, setPinIcon] = useState<Icon | null>(null)
+
+  // No pin picked yet — recenter on the user's actual location instead of the hardcoded fallback.
+  useEffect(() => {
+    if (hasInitialPin) return
+    if (typeof navigator === "undefined" || !navigator.geolocation) return
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setFlyTarget({ lat: pos.coords.latitude, lng: pos.coords.longitude, zoom: 15 }),
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<SearchResult[]>([])

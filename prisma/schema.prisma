@@ -28,6 +28,8 @@ model Patient {
   selfCareAbility       String
   patientCondition      String
   urgencyLevel          String
+  lineUserId            String?             @unique
+  lineLinkedAt          DateTime?
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
@@ -35,6 +37,8 @@ model Patient {
   mediaAssets           MediaAsset[]
   borrowingRequests     BorrowingRequest[]
   notifications         NotificationHistory[]
+  lineMessages          LineMessage[]
+  lineLinkToken         LineLinkToken?
 
   @@index([province, district, subdistrict])
   @@index([latitude, longitude])
@@ -214,6 +218,33 @@ model NotificationHistory {
 
   @@index([trigger, deliveryStatus])
   @@index([patientId, requestId])
+}
+
+model LineLinkToken {
+  id         String    @id @default(cuid())
+  patientId  String    @unique
+  nonce      String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  patient    Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model LineMessage {
+  id             String   @id @default(cuid())
+  patientId      String
+  direction      String
+  senderType     String
+  staffUserId    String?
+  body           String
+  deliveryStatus String?
+  lineMessageId  String?
+  createdAt      DateTime @default(now())
+
+  patient        Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, createdAt])
 }
 
 model ReferenceValue {

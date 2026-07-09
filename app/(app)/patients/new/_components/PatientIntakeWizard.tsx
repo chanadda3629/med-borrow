@@ -9,12 +9,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
-import { Checkbox } from "@/components/ui/checkbox"
+import { SelectableRow } from "@/components/ui/selectable-row"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { ThaiAddressFields } from "@/components/forms/ThaiAddressFields"
-import { PhotoUploadField } from "@/components/forms/PhotoUploadField"
+import { PhotoGalleryUploadField } from "@/components/forms/PhotoGalleryUploadField"
 import { createPatient } from "@/lib/actions/patients/create-patient"
 import { formatThaiDate } from "@/lib/utils/format-thai-date"
 import { EQUIPMENT_TYPES, CHECKLIST_OPTIONS, WALKING_ABILITIES, SELF_CARE_ABILITIES } from "@/lib/domain/constants"
@@ -337,70 +337,69 @@ function Step2Address() {
 
 // ─── Step 3: Photos ───────────────────────────────────────────────────────────
 
+const MAX_PHOTOS = 5
+
 function Step3Photos() {
-  const { watch, setValue } = useFormContext<WizardFormValues>()
-  const patientPhotos = watch("patientPhotos") ?? []
-  const homeEnvPhotos = watch("homeEnvironmentPhotos") ?? []
-
-  // Handle multi-photo: we show up to 3 slots per category
-  function handlePatientPhotoChange(
-    index: number,
-    data: { url: string; publicId: string } | undefined
-  ) {
-    const updated = [...patientPhotos]
-    if (data) {
-      updated[index] = data
-    } else {
-      updated.splice(index, 1)
-    }
-    setValue("patientPhotos", updated)
-  }
-
-  function handleHomePhotoChange(
-    index: number,
-    data: { url: string; publicId: string } | undefined
-  ) {
-    const updated = [...homeEnvPhotos]
-    if (data) {
-      updated[index] = data
-    } else {
-      updated.splice(index, 1)
-    }
-    setValue("homeEnvironmentPhotos", updated)
-  }
+  const {
+    control,
+    watch,
+    trigger,
+    formState: { errors },
+  } = useFormContext<WizardFormValues>()
+  const patientPhotoCount = (watch("patientPhotos") ?? []).length
+  const homeEnvPhotoCount = (watch("homeEnvironmentPhotos") ?? []).length
 
   return (
     <div className="space-y-6">
       <div>
-        <Label>รูปภาพผู้ป่วย</Label>
-        <p className="text-xs text-gray-500 mb-3">อัปโหลดรูปภาพผู้ป่วย (สูงสุด 3 รูป)</p>
-        <div className="flex flex-wrap gap-3">
-          {[0, 1, 2].map((i) => (
-            <PhotoUploadField
-              key={i}
-              label={`รูปที่ ${i + 1}`}
-              value={patientPhotos[i]}
-              onChange={(data) => handlePatientPhotoChange(i, data)}
-            />
-          ))}
+        <div className="flex items-center justify-between mb-1">
+          <Label className="mb-0">
+            รูปภาพผู้ป่วย <span className="text-red-500">*</span>
+          </Label>
+          <Badge variant="secondary">{patientPhotoCount} / {MAX_PHOTOS}</Badge>
         </div>
+        <p className="text-xs text-gray-500 mb-3">
+          อัปโหลดรูปภาพผู้ป่วยอย่างน้อย 1 รูป (สูงสุด {MAX_PHOTOS} รูป)
+        </p>
+        <Controller
+          name="patientPhotos"
+          control={control}
+          rules={{
+            validate: (v) => (v && v.length > 0) || "กรุณาอัปโหลดรูปภาพผู้ป่วยอย่างน้อย 1 รูป",
+          }}
+          render={({ field }) => (
+            <PhotoGalleryUploadField
+              value={field.value ?? []}
+              onChange={(photos) => {
+                field.onChange(photos)
+                void trigger("patientPhotos")
+              }}
+              max={MAX_PHOTOS}
+            />
+          )}
+        />
+        <FieldError message={errors.patientPhotos?.message as string | undefined} />
       </div>
 
       <div>
-        <Label>รูปภาพสภาพแวดล้อมบ้าน</Label>
-        <p className="text-xs text-gray-500 mb-3">
-          ถ่ายรูปภายในบ้านเพื่อประกอบการพิจารณาอุปกรณ์ (สูงสุด 3 รูป)
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {[0, 1, 2].map((i) => (
-            <PhotoUploadField
-              key={i}
-              label={`รูปที่ ${i + 1}`}
-              value={homeEnvPhotos[i]}
-              onChange={(data) => handleHomePhotoChange(i, data)}
-            />
-          ))}
+        <div className="flex items-center justify-between mb-1">
+          <Label className="mb-0">รูปภาพสภาพแวดล้อมบ้าน</Label>
+          <Badge variant="secondary">{homeEnvPhotoCount} / {MAX_PHOTOS}</Badge>
         </div>
+        <p className="text-xs text-gray-500 mb-3">
+          ถ่ายรูปภายในบ้านเพื่อประกอบการพิจารณาอุปกรณ์ (ไม่บังคับ, สูงสุด {MAX_PHOTOS} รูป)
+        </p>
+        <Controller
+          name="homeEnvironmentPhotos"
+          control={control}
+          render={({ field }) => (
+            <PhotoGalleryUploadField
+              value={field.value ?? []}
+              onChange={field.onChange}
+              max={MAX_PHOTOS}
+            />
+          )}
+        />
       </div>
     </div>
   )
@@ -421,53 +420,49 @@ function Step4Assessment() {
     <div className="space-y-4">
       <div>
         <Label>ความสามารถในการเดิน</Label>
-        <div className="space-y-2 mt-2">
-          {WALKING_ABILITIES.map((ability) => (
-            <label key={ability} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-              <Controller
-                name="medicalAssessment.walkingAbility"
-                control={control}
-                rules={{ required: "กรุณาเลือกความสามารถในการเดิน" }}
-                render={({ field }) => (
-                  <input
-                    type="radio"
-                    value={ability}
-                    checked={field.value === ability}
-                    onChange={() => field.onChange(ability)}
-                    className="w-4 h-4 text-blue-600"
-                  />
-                )}
-              />
-              <span className="text-sm text-gray-700">{ability}</span>
-            </label>
-          ))}
-        </div>
+        <Controller
+          name="medicalAssessment.walkingAbility"
+          control={control}
+          rules={{ required: "กรุณาเลือกความสามารถในการเดิน" }}
+          render={({ field }) => (
+            <div className="space-y-2 mt-2">
+              {WALKING_ABILITIES.map((ability) => (
+                <SelectableRow
+                  key={ability}
+                  role="radio"
+                  selected={field.value === ability}
+                  onClick={() => field.onChange(ability)}
+                >
+                  {ability}
+                </SelectableRow>
+              ))}
+            </div>
+          )}
+        />
         <FieldError message={assessErrors?.walkingAbility?.message} />
       </div>
 
       <div>
         <Label>ความสามารถในการดูแลตนเอง</Label>
-        <div className="space-y-2 mt-2">
-          {SELF_CARE_ABILITIES.map((ability) => (
-            <label key={ability} className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-              <Controller
-                name="medicalAssessment.selfCareAbility"
-                control={control}
-                rules={{ required: "กรุณาเลือกความสามารถในการดูแลตนเอง" }}
-                render={({ field }) => (
-                  <input
-                    type="radio"
-                    value={ability}
-                    checked={field.value === ability}
-                    onChange={() => field.onChange(ability)}
-                    className="w-4 h-4 text-blue-600"
-                  />
-                )}
-              />
-              <span className="text-sm text-gray-700">{ability}</span>
-            </label>
-          ))}
-        </div>
+        <Controller
+          name="medicalAssessment.selfCareAbility"
+          control={control}
+          rules={{ required: "กรุณาเลือกความสามารถในการดูแลตนเอง" }}
+          render={({ field }) => (
+            <div className="space-y-2 mt-2">
+              {SELF_CARE_ABILITIES.map((ability) => (
+                <SelectableRow
+                  key={ability}
+                  role="radio"
+                  selected={field.value === ability}
+                  onClick={() => field.onChange(ability)}
+                >
+                  {ability}
+                </SelectableRow>
+              ))}
+            </div>
+          )}
+        />
         <FieldError message={assessErrors?.selfCareAbility?.message} />
       </div>
 
@@ -514,34 +509,34 @@ function Step4Assessment() {
       <div>
         <Label>รายการตรวจสอบอาการ</Label>
         <p className="text-xs text-gray-500 mb-2">เลือกทุกข้อที่ตรงกับสภาพผู้ป่วย</p>
-        <div className="space-y-2">
-          {CHECKLIST_OPTIONS.map((option) => (
-            <label
-              key={option}
-              className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50"
-            >
-              <Controller
-                name="medicalAssessment.checklistAnswers"
-                control={control}
-                rules={{ validate: (v) => (v && v.length > 0) || "กรุณาเลือกอย่างน้อย 1 ข้อ" }}
-                render={({ field }) => (
-                  <Checkbox
-                    checked={field.value?.includes(option) ?? false}
-                    onChange={(e) => {
-                      const current = field.value ?? []
-                      if (e.target.checked) {
-                        field.onChange([...current, option])
-                      } else {
-                        field.onChange(current.filter((v: string) => v !== option))
+        <Controller
+          name="medicalAssessment.checklistAnswers"
+          control={control}
+          rules={{ validate: (v) => (v && v.length > 0) || "กรุณาเลือกอย่างน้อย 1 ข้อ" }}
+          render={({ field }) => {
+            const current: string[] = field.value ?? []
+            return (
+              <div className="space-y-2">
+                {CHECKLIST_OPTIONS.map((option) => {
+                  const isChecked = current.includes(option)
+                  return (
+                    <SelectableRow
+                      key={option}
+                      selected={isChecked}
+                      onClick={() =>
+                        field.onChange(
+                          isChecked ? current.filter((v) => v !== option) : [...current, option]
+                        )
                       }
-                    }}
-                  />
-                )}
-              />
-              <span className="text-sm text-gray-700">{option}</span>
-            </label>
-          ))}
-        </div>
+                    >
+                      {option}
+                    </SelectableRow>
+                  )
+                })}
+              </div>
+            )
+          }}
+        />
         <FieldError message={assessErrors?.checklistAnswers?.message} />
       </div>
     </div>
@@ -894,7 +889,7 @@ export function PatientIntakeWizard() {
       "address.subdistrict",
       "address.postalCode",
     ],
-    2: [],
+    2: ["patientPhotos"],
     3: [
       "medicalAssessment.walkingAbility",
       "medicalAssessment.selfCareAbility",
