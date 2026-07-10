@@ -45,18 +45,20 @@ model Patient {
 }
 
 model MedicalAssessment {
-  id               String   @id @default(cuid())
-  patientId        String   @unique
-  age              Int
-  chronicDiseases  String[] @default([])
-  walkingAbility   String
-  selfCareAbility  String
-  patientCondition String
-  urgencyLevel     String
-  checklistAnswers String[] @default([])
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  patient          Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id                  String    @id @default(cuid())
+  patientId           String    @unique
+  age                 Int
+  chronicDiseases     String[]  @default([])
+  walkingAbility      String
+  selfCareAbility     String
+  patientCondition    String
+  urgencyLevel        String
+  checklistAnswers    String[]  @default([])
+  assessedAt          DateTime?
+  usageRecommendation String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  patient             Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
 }
