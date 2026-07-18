@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Card, CardContent } from "@/components/ui/card"
 
 interface NewEquipmentFormProps {
@@ -20,6 +21,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
   const [equipmentCode, setEquipmentCode] = useState("")
   const [assetNumber, setAssetNumber] = useState("")
   const [equipmentType, setEquipmentType] = useState("")
+  const [condition, setCondition] = useState("ดี")
   const [donorName, setDonorName] = useState("")
   const [receivedDate, setReceivedDate] = useState("")
 
@@ -38,6 +40,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
         equipmentCode: equipmentCode.trim(),
         assetNumber: assetNumber.trim(),
         equipmentType,
+        condition,
         donorName: donorName.trim() || undefined,
         receivedDate,
       })
@@ -58,7 +61,9 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
       <CardContent className="p-4">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="equipmentCode">รหัสอุปกรณ์</Label>
+            <Label htmlFor="equipmentCode">
+              รหัสอุปกรณ์ <span className="text-red-600">*</span>
+            </Label>
             <Input
               id="equipmentCode"
               value={equipmentCode}
@@ -69,7 +74,9 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="assetNumber">หมายเลขครุภัณฑ์</Label>
+            <Label htmlFor="assetNumber">
+              หมายเลขครุภัณฑ์ <span className="text-red-600">*</span>
+            </Label>
             <Input
               id="assetNumber"
               value={assetNumber}
@@ -80,7 +87,9 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="equipmentType">ประเภทอุปกรณ์</Label>
+            <Label htmlFor="equipmentType">
+              ประเภทอุปกรณ์ <span className="text-red-600">*</span>
+            </Label>
             <Select
               id="equipmentType"
               value={equipmentType}
@@ -97,6 +106,21 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
           </div>
 
           <div className="space-y-1.5">
+            <Label htmlFor="condition">
+              สภาพอุปกรณ์ <span className="text-red-600">*</span>
+            </Label>
+            <Select
+              id="condition"
+              value={condition}
+              onChange={(e) => setCondition(e.target.value)}
+              disabled={loading}
+            >
+              <option value="ดี">ดี</option>
+              <option value="ชำรุด">ชำรุด</option>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="donorName">ชื่อผู้บริจาค (ถ้ามี)</Label>
             <Input
               id="donorName"
@@ -108,13 +132,15 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="receivedDate">วันที่รับเข้าคลัง</Label>
-            <Input
+            <Label htmlFor="receivedDate">
+              วันที่รับเข้าคลัง <span className="text-red-600">*</span>
+            </Label>
+            <DatePicker
               id="receivedDate"
-              type="date"
               value={receivedDate}
-              onChange={(e) => setReceivedDate(e.target.value)}
-              disabled={loading}
+              onChange={setReceivedDate}
+              max={new Date().toISOString().slice(0, 10)}
+              placeholder="เลือกวันที่รับเข้าคลัง"
             />
           </div>
 

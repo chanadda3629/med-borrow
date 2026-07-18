@@ -8,11 +8,13 @@ interface CreateItemInput {
   equipmentType: string
   donorName?: string
   receivedDate: string
+  condition?: string
 }
 
 export async function createEquipmentItem(input: CreateItemInput) {
   try {
     const donorName = input.donorName?.trim()
+    const condition = input.condition === "ชำรุด" ? "ชำรุด" : "ดี"
     const item = await db.equipmentItem.create({
       data: {
         equipmentId: "EQ-" + Date.now(),
@@ -22,6 +24,7 @@ export async function createEquipmentItem(input: CreateItemInput) {
         donorName: donorName ? donorName : null,
         receivedDate: new Date(input.receivedDate),
         currentStatus: "พร้อมใช้งาน",
+        condition,
       },
     })
     return ok({ itemId: item.id })

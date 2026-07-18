@@ -1,15 +1,13 @@
 "use client"
-import { useState, useEffect, useCallback, useRef, type ComponentType } from "react"
+import { useState, useEffect, useCallback, type ComponentType } from "react"
 import { useForm, FormProvider, Controller, useFormContext } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
-import { SelectableRow } from "@/components/ui/selectable-row"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -17,8 +15,6 @@ import { ThaiAddressFields } from "@/components/forms/ThaiAddressFields"
 import { PhotoGalleryUploadField } from "@/components/forms/PhotoGalleryUploadField"
 import { createPatient } from "@/lib/actions/patients/create-patient"
 import { formatThaiDate } from "@/lib/utils/format-thai-date"
-import { EQUIPMENT_TYPES, CHECKLIST_OPTIONS, WALKING_ABILITIES, SELF_CARE_ABILITIES } from "@/lib/domain/constants"
-import type { EquipmentType, AIRecommendationResult } from "@/lib/domain/schemas"
 import {
   ChevronLeft,
   ChevronRight,
@@ -26,12 +22,15 @@ import {
   Loader2,
   AlertCircle,
   User,
+  UserPlus,
   IdCard,
   CalendarDays,
   Users,
   Phone,
   Home,
   MapPinned,
+  MapPin,
+  ExternalLink,
 } from "lucide-react"
 
 // Dynamic import of the map to avoid SSR issues with Leaflet
@@ -50,6 +49,7 @@ interface WizardFormValues {
   age: number
   gender: string
   phoneNumber: string
+  reporterName: string
   // Step 2
   address: {
     houseNumber: string
@@ -67,28 +67,18 @@ interface WizardFormValues {
   // Step 3
   patientPhotos: Array<{ url: string; publicId: string }>
   homeEnvironmentPhotos: Array<{ url: string; publicId: string }>
-  // Step 4
-  medicalAssessment: {
-    age: number
-    chronicDiseases: string
-    walkingAbility: string
-    selfCareAbility: string
-    patientCondition: string
-    urgencyLevel: string
-    checklistAnswers: string[]
-  }
-  // Step 5
-  staffDecisionEquipmentType: EquipmentType
 }
 
 // ─── Step labels ─────────────────────────────────────────────────────────────
+//
+// Intake captures the patient, address and photos only. The medical assessment
+// and equipment selection happen later on the dedicated assessment page
+// (/requests/[id]/assess) once the request reaches the "ประเมินผู้ป่วย" stage.
 
 const STEPS = [
   "ข้อมูลส่วนตัว",
   "ที่อยู่และแผนที่",
   "รูปภาพ",
-  "ประเมินอาการ",
-  "AI แนะนำ",
   "สรุปข้อมูล",
 ] as const
 
@@ -250,6 +240,16 @@ function Step1Personal() {
           />
           <FieldError message={errors.phoneNumber?.message} />
         </div>
+
+        <div>
+          <RequiredLabel icon={UserPlus} htmlFor="reporterName">ชื่อญาติผู้ป่วย/ผู้แจ้ง</RequiredLabel>
+          <Input
+            id="reporterName"
+            placeholder="กรอกชื่อญาติผู้ป่วยหรือผู้แจ้ง"
+            {...register("reporterName", { required: "กรุณากรอกชื่อญาติผู้ป่วย/ผู้แจ้ง" })}
+          />
+          <FieldError message={errors.reporterName?.message} />
+        </div>
       </CardContent>
     </Card>
   )
@@ -404,337 +404,11 @@ function Step3Photos() {
     </div>
   )
 }
-
-// ─── Step 4: Medical Assessment ───────────────────────────────────────────────
-
-function Step4Assessment() {
-  const {
-    register,
-    control,
-    formState: { errors },
-  } = useFormContext<WizardFormValues>()
-
-  const assessErrors = errors.medicalAssessment as Record<string, { message?: string }> | undefined
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <Label>ความสามารถในการเดิน</Label>
-        <Controller
-          name="medicalAssessment.walkingAbility"
-          control={control}
-          rules={{ required: "กรุณาเลือกความสามารถในการเดิน" }}
-          render={({ field }) => (
-            <div className="space-y-2 mt-2">
-              {WALKING_ABILITIES.map((ability) => (
-                <SelectableRow
-                  key={ability}
-                  role="radio"
-                  selected={field.value === ability}
-                  onClick={() => field.onChange(ability)}
-                >
-                  {ability}
-                </SelectableRow>
-              ))}
-            </div>
-          )}
-        />
-        <FieldError message={assessErrors?.walkingAbility?.message} />
-      </div>
-
-      <div>
-        <Label>ความสามารถในการดูแลตนเอง</Label>
-        <Controller
-          name="medicalAssessment.selfCareAbility"
-          control={control}
-          rules={{ required: "กรุณาเลือกความสามารถในการดูแลตนเอง" }}
-          render={({ field }) => (
-            <div className="space-y-2 mt-2">
-              {SELF_CARE_ABILITIES.map((ability) => (
-                <SelectableRow
-                  key={ability}
-                  role="radio"
-                  selected={field.value === ability}
-                  onClick={() => field.onChange(ability)}
-                >
-                  {ability}
-                </SelectableRow>
-              ))}
-            </div>
-          )}
-        />
-        <FieldError message={assessErrors?.selfCareAbility?.message} />
-      </div>
-
-      <div>
-        <Label htmlFor="patientCondition">สภาพผู้ป่วย</Label>
-        <Textarea
-          id="patientCondition"
-          placeholder="อธิบายสภาพและอาการของผู้ป่วย..."
-          {...register("medicalAssessment.patientCondition", {
-            required: "กรุณากรอกสภาพผู้ป่วย",
-          })}
-        />
-        <FieldError message={assessErrors?.patientCondition?.message} />
-      </div>
-
-      <div>
-        <Label htmlFor="urgencyLevel">ระดับความเร่งด่วน</Label>
-        <Controller
-          name="medicalAssessment.urgencyLevel"
-          control={control}
-          rules={{ required: "กรุณาเลือกระดับความเร่งด่วน" }}
-          render={({ field }) => (
-            <Select id="urgencyLevel" {...field}>
-              <option value="">-- เลือกระดับความเร่งด่วน --</option>
-              <option value="ปกติ">ปกติ</option>
-              <option value="เร่งด่วน">เร่งด่วน</option>
-              <option value="เร่งด่วนมาก">เร่งด่วนมาก</option>
-            </Select>
-          )}
-        />
-        <FieldError message={assessErrors?.urgencyLevel?.message} />
-      </div>
-
-      <div>
-        <Label htmlFor="chronicDiseases">โรคประจำตัว (คั่นด้วยเครื่องหมายจุลภาค)</Label>
-        <Textarea
-          id="chronicDiseases"
-          placeholder="เช่น เบาหวาน, ความดันโลหิตสูง, มะเร็ง"
-          {...register("medicalAssessment.chronicDiseases")}
-        />
-        <p className="text-xs text-gray-400 mt-1">ถ้าไม่มีสามารถเว้นว่างได้</p>
-      </div>
-
-      <div>
-        <Label>รายการตรวจสอบอาการ</Label>
-        <p className="text-xs text-gray-500 mb-2">เลือกทุกข้อที่ตรงกับสภาพผู้ป่วย</p>
-        <Controller
-          name="medicalAssessment.checklistAnswers"
-          control={control}
-          rules={{ validate: (v) => (v && v.length > 0) || "กรุณาเลือกอย่างน้อย 1 ข้อ" }}
-          render={({ field }) => {
-            const current: string[] = field.value ?? []
-            return (
-              <div className="space-y-2">
-                {CHECKLIST_OPTIONS.map((option) => {
-                  const isChecked = current.includes(option)
-                  return (
-                    <SelectableRow
-                      key={option}
-                      selected={isChecked}
-                      onClick={() =>
-                        field.onChange(
-                          isChecked ? current.filter((v) => v !== option) : [...current, option]
-                        )
-                      }
-                    >
-                      {option}
-                    </SelectableRow>
-                  )
-                })}
-              </div>
-            )
-          }}
-        />
-        <FieldError message={assessErrors?.checklistAnswers?.message} />
-      </div>
-    </div>
-  )
-}
-
-// ─── Step 5: AI Recommendation ────────────────────────────────────────────────
-
-interface AIRecommendationItem {
-  equipmentType: EquipmentType
-  matchingScorePercentage: number
-  explanation?: string
-  rankingOrder: number
-}
-
-function Step5AIRecommend() {
-  const { watch, setValue } = useFormContext<WizardFormValues>()
-  const [recommendations, setRecommendations] = useState<AIRecommendationItem[]>([])
-  const [loading, setLoading] = useState(false)
-  const [aiError, setAiError] = useState<string | null>(null)
-
-  const selectedEquipment = watch("staffDecisionEquipmentType")
-
-  const walkingAbility = watch("medicalAssessment.walkingAbility")
-  const selfCareAbility = watch("medicalAssessment.selfCareAbility")
-  const patientCondition = watch("medicalAssessment.patientCondition")
-  const urgencyLevel = watch("medicalAssessment.urgencyLevel")
-  const chronicDiseasesRaw = watch("medicalAssessment.chronicDiseases")
-  const checklistAnswers = watch("medicalAssessment.checklistAnswers")
-  const age = watch("age")
-
-  async function fetchRecommendations() {
-    setLoading(true)
-    setAiError(null)
-    try {
-      const chronicDiseases = chronicDiseasesRaw
-        ? chronicDiseasesRaw
-            .split(",")
-            .map((s: string) => s.trim())
-            .filter(Boolean)
-        : []
-
-      const res = await fetch("/api/ai/recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          age,
-          chronicDiseases,
-          walkingAbility,
-          selfCareAbility,
-          patientCondition,
-          urgencyLevel,
-          checklistAnswers,
-        }),
-      })
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({})) as { error?: string }
-        throw new Error(errData.error ?? "ไม่สามารถรับคำแนะนำจาก AI ได้")
-      }
-
-      const data = await res.json() as AIRecommendationResult
-      setRecommendations(data.recommendations as AIRecommendationItem[])
-      // Auto-select top recommendation if staff hasn't chosen yet
-      if (!selectedEquipment && data.recommendations.length > 0) {
-        setValue("staffDecisionEquipmentType", data.recommendations[0].equipmentType as EquipmentType)
-      }
-    } catch (e) {
-      setAiError(e instanceof Error ? e.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Run once on mount via a ref flag to avoid triggering setState synchronously
-  // inside the effect body; the actual setState calls happen asynchronously inside
-  // the async fetchRecommendations function.
-  const didFetch = useRef(false)
-  useEffect(() => {
-    if (didFetch.current) return
-    didFetch.current = true
-    fetchRecommendations().catch(() => {})
-    // fetchRecommendations is a stable closure defined in the same component render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="font-semibold text-gray-900">คำแนะนำจาก AI</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
-            AI วิเคราะห์ข้อมูลและแนะนำอุปกรณ์ที่เหมาะสม เจ้าหน้าที่เป็นผู้ตัดสินใจขั้นสุดท้าย
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => void fetchRecommendations()}
-          disabled={loading}
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "โหลดใหม่"}
-        </Button>
-      </div>
-
-      {loading && (
-        <div className="flex flex-col items-center justify-center py-12 gap-3">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-          <p className="text-sm text-gray-500">กำลังวิเคราะห์ข้อมูล...</p>
-        </div>
-      )}
-
-      {aiError && !loading && (
-        <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg border border-red-200">
-          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-red-700">ไม่สามารถโหลดคำแนะนำ AI</p>
-            <p className="text-xs text-red-600 mt-0.5">{aiError}</p>
-            <p className="text-xs text-gray-500 mt-2">กรุณาเลือกอุปกรณ์ด้วยตนเองด้านล่าง</p>
-          </div>
-        </div>
-      )}
-
-      {!loading && recommendations.length > 0 && (
-        <div className="space-y-3">
-          {recommendations
-            .sort((a, b) => a.rankingOrder - b.rankingOrder)
-            .map((rec) => (
-              <button
-                key={rec.equipmentType}
-                type="button"
-                onClick={() => setValue("staffDecisionEquipmentType", rec.equipmentType)}
-                className={`w-full text-left p-4 rounded-xl border-2 transition-colors ${
-                  selectedEquipment === rec.equipmentType
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-gray-900">{rec.equipmentType}</span>
-                    <Badge variant={rec.rankingOrder === 1 ? "default" : "secondary"}>
-                      อันดับ {rec.rankingOrder}
-                    </Badge>
-                  </div>
-                  <span className="text-sm font-semibold text-blue-700">
-                    {rec.matchingScorePercentage}%
-                  </span>
-                </div>
-                <Progress value={rec.matchingScorePercentage} className="mb-2" />
-                {rec.explanation && (
-                  <p className="text-xs text-gray-600 mt-1">{rec.explanation}</p>
-                )}
-                {selectedEquipment === rec.equipmentType && (
-                  <div className="flex items-center gap-1 mt-2 text-blue-600">
-                    <Check className="w-4 h-4" />
-                    <span className="text-xs font-medium">เลือกแล้ว</span>
-                  </div>
-                )}
-              </button>
-            ))}
-        </div>
-      )}
-
-      <div className="pt-2 border-t border-gray-100">
-        <Label htmlFor="staffDecisionEquipmentType">เลือกอุปกรณ์ด้วยตนเอง (Override)</Label>
-        <Controller
-          name="staffDecisionEquipmentType"
-          render={({ field }) => (
-            <Select id="staffDecisionEquipmentType" {...field}>
-              <option value="">-- เลือกอุปกรณ์ --</option>
-              {EQUIPMENT_TYPES.map((t) => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </Select>
-          )}
-        />
-        <p className="text-xs text-gray-400 mt-1">
-          เจ้าหน้าที่สามารถเลือกอุปกรณ์ที่แตกต่างจาก AI ได้
-        </p>
-      </div>
-    </div>
-  )
-}
-
-// ─── Step 6: Summary ──────────────────────────────────────────────────────────
+// ─── Step 4: Summary ──────────────────────────────────────────────────────────
 
 function Step6Summary() {
   const { watch } = useFormContext<WizardFormValues>()
   const values = watch()
-
-  const chronicList = values.medicalAssessment?.chronicDiseases
-    ? values.medicalAssessment.chronicDiseases
-        .split(",")
-        .map((s: string) => s.trim())
-        .filter(Boolean)
-    : []
 
   return (
     <div className="space-y-4">
@@ -752,6 +426,7 @@ function Step6Summary() {
           <Row label="อายุ" value={`${values.age} ปี`} />
           <Row label="เพศ" value={values.gender} />
           <Row label="เบอร์โทร" value={values.phoneNumber} />
+          <Row label="ญาติผู้ป่วย/ผู้แจ้ง" value={values.reporterName} />
         </CardContent>
       </Card>
 
@@ -774,49 +449,29 @@ function Step6Summary() {
               .join(" ")}
           />
           {values.location?.latitude !== 0 && (
-            <Row
-              label="พิกัด GPS"
-              value={`${values.location?.latitude?.toFixed(6)}, ${values.location?.longitude?.toFixed(6)}`}
-            />
+            <div className="flex gap-2">
+              <span className="text-gray-500 min-w-[120px] flex-shrink-0">
+                ตำแหน่งบนแผนที่:
+              </span>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${values.location?.latitude},${values.location?.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline font-medium break-all"
+              >
+                <MapPin className="w-4 h-4 flex-shrink-0" />
+                <span>เปิดใน Google Maps</span>
+                <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+              </a>
+            </div>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>การประเมินอาการ</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1 text-sm">
-          <Row label="การเดิน" value={values.medicalAssessment?.walkingAbility} />
-          <Row label="การดูแลตนเอง" value={values.medicalAssessment?.selfCareAbility} />
-          <Row label="สภาพผู้ป่วย" value={values.medicalAssessment?.patientCondition} />
-          <Row label="ระดับความเร่งด่วน" value={values.medicalAssessment?.urgencyLevel} />
-          {chronicList.length > 0 && (
-            <Row label="โรคประจำตัว" value={chronicList.join(", ")} />
-          )}
-          {values.medicalAssessment?.checklistAnswers?.length > 0 && (
-            <Row
-              label="รายการตรวจสอบ"
-              value={values.medicalAssessment.checklistAnswers.join(", ")}
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>อุปกรณ์ที่ขอยืม</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-base font-semibold text-blue-700">
-            {values.staffDecisionEquipmentType || "ยังไม่ได้เลือก"}
-          </p>
         </CardContent>
       </Card>
 
       <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
         <p className="text-sm text-amber-800">
-          กรุณาตรวจสอบข้อมูลให้ครบถ้วนก่อนกดบันทึก เมื่อบันทึกแล้วระบบจะสร้างคำร้องขอยืมอุปกรณ์
+          กรุณาตรวจสอบข้อมูลให้ครบถ้วนก่อนกดบันทึก เมื่อบันทึกแล้วระบบจะสร้างคำร้อง
+          และดำเนินการประเมินอาการในขั้นตอนถัดไป
         </p>
       </div>
     </div>
@@ -848,6 +503,7 @@ export function PatientIntakeWizard() {
       age: 0,
       gender: "",
       phoneNumber: "",
+      reporterName: "",
       address: {
         houseNumber: "",
         moo: "",
@@ -863,16 +519,6 @@ export function PatientIntakeWizard() {
       },
       patientPhotos: [],
       homeEnvironmentPhotos: [],
-      medicalAssessment: {
-        age: 0,
-        chronicDiseases: "",
-        walkingAbility: "" as WizardFormValues["medicalAssessment"]["walkingAbility"],
-        selfCareAbility: "" as WizardFormValues["medicalAssessment"]["selfCareAbility"],
-        patientCondition: "",
-        urgencyLevel: "",
-        checklistAnswers: [],
-      },
-      staffDecisionEquipmentType: "" as EquipmentType,
     },
     mode: "onTouched",
   })
@@ -881,7 +527,7 @@ export function PatientIntakeWizard() {
 
   // Fields to validate per step
   const stepFields: Record<number, string[]> = {
-    0: ["fullName", "nationalId", "dateOfBirth", "gender", "phoneNumber"],
+    0: ["fullName", "nationalId", "dateOfBirth", "gender", "phoneNumber", "reporterName"],
     1: [
       "address.houseNumber",
       "address.province",
@@ -890,15 +536,7 @@ export function PatientIntakeWizard() {
       "address.postalCode",
     ],
     2: ["patientPhotos"],
-    3: [
-      "medicalAssessment.walkingAbility",
-      "medicalAssessment.selfCareAbility",
-      "medicalAssessment.patientCondition",
-      "medicalAssessment.urgencyLevel",
-      "medicalAssessment.checklistAnswers",
-    ],
-    4: ["staffDecisionEquipmentType"],
-    5: [],
+    3: [],
   }
 
   async function handleNext() {
@@ -924,13 +562,6 @@ export function PatientIntakeWizard() {
     setSubmitError(null)
 
     try {
-      const chronicDiseases = values.medicalAssessment.chronicDiseases
-        ? values.medicalAssessment.chronicDiseases
-            .split(",")
-            .map((s: string) => s.trim())
-            .filter(Boolean)
-        : []
-
       const result = await createPatient({
         fullName: values.fullName,
         nationalId: values.nationalId,
@@ -938,6 +569,7 @@ export function PatientIntakeWizard() {
         age: values.age,
         gender: values.gender,
         phoneNumber: values.phoneNumber,
+        reporterName: values.reporterName,
         address: {
           houseNumber: values.address.houseNumber,
           moo: values.address.moo || undefined,
@@ -955,16 +587,6 @@ export function PatientIntakeWizard() {
         },
         patientPhotos: values.patientPhotos,
         homeEnvironmentPhotos: values.homeEnvironmentPhotos,
-        medicalAssessment: {
-          age: values.age,
-          chronicDiseases,
-          walkingAbility: values.medicalAssessment.walkingAbility,
-          selfCareAbility: values.medicalAssessment.selfCareAbility,
-          patientCondition: values.medicalAssessment.patientCondition,
-          urgencyLevel: values.medicalAssessment.urgencyLevel,
-          checklistAnswers: values.medicalAssessment.checklistAnswers,
-        },
-        staffDecisionEquipmentType: values.staffDecisionEquipmentType,
       })
 
       if (!result.success) {
@@ -984,9 +606,7 @@ export function PatientIntakeWizard() {
     <Step1Personal key="step1" />,
     <Step2Address key="step2" />,
     <Step3Photos key="step3" />,
-    <Step4Assessment key="step4" />,
-    <Step5AIRecommend key="step5" />,
-    <Step6Summary key="step6" />,
+    <Step6Summary key="step4" />,
   ]
 
   const isLastStep = step === STEPS.length - 1

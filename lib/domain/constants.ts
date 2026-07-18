@@ -12,11 +12,14 @@ export const EQUIPMENT_TYPES = [
 
 export const EQUIPMENT_STATUSES = [
   "พร้อมใช้งาน",
+  "รอจัดส่ง",
   "ถูกยืม",
   "รอรับคืน",
   "ชำรุด",
   "ซ่อมบำรุง",
 ] as const;
+
+export const EQUIPMENT_CONDITIONS = ["ดี", "ชำรุด"] as const;
 
 export const BORROW_WORKFLOW_STATUSES = [
   "รับคำร้อง",
@@ -31,6 +34,23 @@ export const BORROW_WORKFLOW_STATUSES = [
   "คืนอุปกรณ์",
   "ปิดรายการ",
 ] as const;
+
+// Grouped display steps for the workflow. อนุมัติ and ไม่อนุมัติ collapse into a
+// single visual step / filter chip ("อนุมัติ / ไม่อนุมัติ") — staff pick one on the
+// approval page — even though they stay separate canonical statuses underneath.
+// Shared by WorkflowStatusStepper (detail page) and the requests-list filter chips.
+export const WORKFLOW_DISPLAY_STEPS: { label: string; statuses: string[] }[] = [
+  { label: "รับคำร้อง", statuses: ["รับคำร้อง"] },
+  { label: "ประเมินผู้ป่วย", statuses: ["ประเมินผู้ป่วย"] },
+  { label: "AI แนะนำอุปกรณ์", statuses: ["AI แนะนำอุปกรณ์"] },
+  { label: "ตรวจสอบคลังอุปกรณ์", statuses: ["ตรวจสอบคลังอุปกรณ์"] },
+  { label: "อนุมัติ / ไม่อนุมัติ", statuses: ["อนุมัติ", "ไม่อนุมัติ"] },
+  { label: "เตรียมจัดส่ง", statuses: ["เตรียมจัดส่ง"] },
+  { label: "จัดส่งสำเร็จ", statuses: ["จัดส่งสำเร็จ"] },
+  { label: "รอคืน", statuses: ["รอคืน"] },
+  { label: "คืนอุปกรณ์", statuses: ["คืนอุปกรณ์"] },
+  { label: "ปิดรายการ", statuses: ["ปิดรายการ"] },
+];
 
 // Per-status text color (flat list / labels). Pill colors live in StatusBadge.
 export const WORKFLOW_TEXT_COLORS: Record<string, string> = {
@@ -50,6 +70,8 @@ export const WORKFLOW_TEXT_COLORS: Record<string, string> = {
 export function workflowTextColor(status: string): string {
   return WORKFLOW_TEXT_COLORS[status] ?? "text-gray-500";
 }
+
+export const URGENCY_LEVELS = ["ปกติ", "เร่งด่วน", "เร่งด่วนมาก"] as const;
 
 export const BORROW_APPROVAL_DECISIONS = ["อนุมัติ", "ไม่อนุมัติ"] as const;
 

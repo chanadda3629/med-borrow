@@ -32,19 +32,32 @@ function HeatLayer({ points }: { points: HeatPoint[] }) {
 
   useEffect(() => {
     let layer: { remove: () => void } | null = null
+    let cancelled = false
 
-    import("leaflet").then(async (L) => {
-      const lModule = L.default as LeafletWithHeat
-      if (typeof lModule.heatLayer !== "function") {
-        await loadHeatScript()
-      }
-      layer = lModule.heatLayer(
-        points.map((p) => [p.lat, p.lng, 1.0]),
-        { radius: 30, blur: 15, maxZoom: 17 }
-      ).addTo(map)
-    })
+    import("leaflet")
+      .then(async (mod) => {
+        const lModule = mod.default as LeafletWithHeat
+        if (typeof lModule.heatLayer !== "function") {
+          // leaflet.heat is a UMD plugin that patches the global `L`. Expose our
+          // ESM leaflet instance as `window.L` first so the plugin attaches
+          // `heatLayer` to the same object we use here.
+          ;(window as unknown as { L: unknown }).L = lModule
+          await loadHeatScript()
+        }
+        if (cancelled || typeof lModule.heatLayer !== "function") return
+        layer = lModule.heatLayer(
+          points.map((p) => [p.lat, p.lng, 1.0]),
+          { radius: 30, blur: 15, maxZoom: 17 }
+        ).addTo(map)
+      })
+      .catch(() => {
+        // A heatmap failure must never crash the rest of the app.
+      })
 
-    return () => { layer?.remove() }
+    return () => {
+      cancelled = true
+      layer?.remove()
+    }
   }, [map, points])
 
   return null

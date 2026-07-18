@@ -2,8 +2,11 @@
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { fireAndForgetLineNotification } from "@/lib/integrations/line/fire-and-forget"
-import type { EquipmentType } from "@/lib/domain/schemas"
 
+// Intake ("รับคำร้อง") captures the patient, address and photos only. The medical
+// assessment, AI recommendation and equipment selection now happen later on the
+// dedicated assessment ("ประเมินคำร้อง") page. The request is created at status
+// "รับคำร้อง" (awaiting assessment) with no equipment type chosen yet.
 interface CreatePatientInput {
   fullName: string
   nationalId: string
@@ -11,6 +14,7 @@ interface CreatePatientInput {
   age: number
   gender: string
   phoneNumber: string
+  reporterName?: string
   address: {
     houseNumber: string
     moo?: string
@@ -26,16 +30,6 @@ interface CreatePatientInput {
   }
   patientPhotos: Array<{ url: string; publicId?: string }>
   homeEnvironmentPhotos: Array<{ url: string; publicId?: string }>
-  medicalAssessment: {
-    age: number
-    chronicDiseases: string[]
-    walkingAbility: string
-    selfCareAbility: string
-    patientCondition: string
-    urgencyLevel: string
-    checklistAnswers: string[]
-  }
-  staffDecisionEquipmentType: EquipmentType
 }
 
 export async function createPatient(input: CreatePatientInput) {
@@ -50,6 +44,7 @@ export async function createPatient(input: CreatePatientInput) {
           age: input.age,
           gender: input.gender,
           phoneNumber: input.phoneNumber,
+          reporterName: input.reporterName?.trim() || null,
           houseNumber: input.address.houseNumber,
           moo: input.address.moo,
           province: input.address.province,
@@ -59,23 +54,12 @@ export async function createPatient(input: CreatePatientInput) {
           latitude: input.location.latitude,
           longitude: input.location.longitude,
           googleMapsUrl: input.location.googleMapsUrl,
-          chronicDiseases: input.medicalAssessment.chronicDiseases,
-          walkingAbility: input.medicalAssessment.walkingAbility,
-          selfCareAbility: input.medicalAssessment.selfCareAbility,
-          patientCondition: input.medicalAssessment.patientCondition,
-          urgencyLevel: input.medicalAssessment.urgencyLevel,
-        },
-      })
-      await tx.medicalAssessment.create({
-        data: {
-          patientId: patient.id,
-          age: input.medicalAssessment.age,
-          chronicDiseases: input.medicalAssessment.chronicDiseases,
-          walkingAbility: input.medicalAssessment.walkingAbility,
-          selfCareAbility: input.medicalAssessment.selfCareAbility,
-          patientCondition: input.medicalAssessment.patientCondition,
-          urgencyLevel: input.medicalAssessment.urgencyLevel,
-          checklistAnswers: input.medicalAssessment.checklistAnswers,
+          // Medical fields are filled in during assessment; left empty at intake.
+          chronicDiseases: [],
+          walkingAbility: "",
+          selfCareAbility: "",
+          patientCondition: "",
+          urgencyLevel: "",
         },
       })
       const allPhotos = [
@@ -97,7 +81,8 @@ export async function createPatient(input: CreatePatientInput) {
         data: {
           requestNumber,
           patientId: patient.id,
-          requestedEquipmentType: input.staffDecisionEquipmentType,
+          // Equipment type is chosen during assessment.
+          requestedEquipmentType: "",
           workflowStatus: "รับคำร้อง",
         },
       })

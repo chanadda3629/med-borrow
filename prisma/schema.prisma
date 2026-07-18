@@ -14,6 +14,7 @@ model Patient {
   age                   Int
   gender                String
   phoneNumber           String              @db.VarChar(10)
+  reporterName          String?
   houseNumber           String
   moo                   String?
   province              String
@@ -56,6 +57,10 @@ model MedicalAssessment {
   checklistAnswers    String[]  @default([])
   assessedAt          DateTime?
   usageRecommendation String?
+  assessorName        String?
+  assessmentSummary   String?
+  prescribedEquipment Json?
+  equipmentNote       String?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   patient             Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
@@ -90,6 +95,7 @@ model EquipmentItem {
   donorName            String?
   receivedDate         DateTime
   currentStatus        String
+  condition            String                       @default("ดี")
   currentLoanRequestId String?                      @unique
   createdAt            DateTime                     @default(now())
   updatedAt            DateTime                     @updatedAt

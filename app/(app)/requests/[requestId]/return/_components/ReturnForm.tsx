@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { DatePicker } from "@/components/ui/date-picker"
 import { PhotoUploadField } from "@/components/forms/PhotoUploadField"
 
 interface ReturnFormProps {
@@ -64,12 +65,12 @@ export function ReturnForm({ requestId }: ReturnFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <Label htmlFor="returnDate">วันที่รับคืน</Label>
-        <Input
+        <DatePicker
           id="returnDate"
-          type="date"
           value={returnDate}
-          onChange={(e) => setReturnDate(e.target.value)}
-          disabled={loading}
+          onChange={setReturnDate}
+          max={new Date().toISOString().slice(0, 10)}
+          placeholder="เลือกวันที่รับคืน"
         />
       </div>
 

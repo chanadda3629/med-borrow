@@ -17,21 +17,33 @@ const WORKFLOW_COLORS: Record<string, string> = {
 
 const EQUIPMENT_COLORS: Record<string, string> = {
   "พร้อมใช้งาน": "bg-green-100 text-green-700",
-  "ถูกยืม": "bg-blue-100 text-blue-700",
-  "รอรับคืน": "bg-amber-100 text-amber-700",
+  "รอจัดส่ง": "bg-yellow-100 text-yellow-700",
+  "ถูกยืม": "bg-sky-100 text-sky-700",
+  "รอรับคืน": "bg-purple-100 text-purple-700",
   "ชำรุด": "bg-red-100 text-red-700",
   "ซ่อมบำรุง": "bg-orange-100 text-orange-700",
 }
 
+const CONDITION_COLORS: Record<string, string> = {
+  "ดี": "bg-green-100 text-green-700",
+  "ซ่อมบำรุง": "bg-yellow-100 text-yellow-700",
+  "ชำรุด": "bg-red-100 text-red-700",
+}
+
+const COLOR_MAPS = {
+  workflow: WORKFLOW_COLORS,
+  equipment: EQUIPMENT_COLORS,
+  condition: CONDITION_COLORS,
+}
+
 interface StatusBadgeProps {
   status: string
-  type?: "workflow" | "equipment"
+  type?: "workflow" | "equipment" | "condition"
   className?: string
 }
 
 export function StatusBadge({ status, type = "workflow", className }: StatusBadgeProps) {
-  const colorMap = type === "workflow" ? WORKFLOW_COLORS : EQUIPMENT_COLORS
-  const color = colorMap[status] ?? "bg-gray-100 text-gray-600"
+  const color = COLOR_MAPS[type][status] ?? "bg-gray-100 text-gray-600"
   return (
     <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium", color, className)}>
       {status}

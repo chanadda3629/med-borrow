@@ -13,6 +13,7 @@ import {
   MEDIA_ASSET_KINDS,
   RETURN_CONDITIONS,
   SELF_CARE_ABILITIES,
+  URGENCY_LEVELS,
   WALKING_ABILITIES,
 } from "./constants";
 
@@ -92,11 +93,32 @@ export const patientSchema = z.object({
   age: z.coerce.number().int().min(0).max(130),
   gender: z.string().trim().min(1),
   phoneNumber: thaiMobilePhoneSchema,
+  reporterName: optionalTextSchema,
   address: addressSchema,
   location: locationSchema,
   patientPhotos: z.array(mediaAssetSchema).default([]),
   homeEnvironmentPhotos: z.array(mediaAssetSchema).default([]),
   medicalAssessment: medicalAssessmentSchema,
+});
+
+export const urgencyLevelSchema = z.enum(URGENCY_LEVELS);
+
+// Per-request assessment ("ประเมินผู้ป่วย" stage): staff review the intake, record a
+// preliminary finding, and prescribe one or more equipment types with quantities.
+export const prescribedEquipmentItemSchema = z.object({
+  equipmentType: z.enum(EQUIPMENT_TYPES),
+  quantity: z.coerce.number().int().min(1).max(99),
+});
+
+export const assessmentFormSchema = z.object({
+  assessorName: z.string().trim().min(1),
+  assessedAt: z.coerce.date().optional(),
+  patientCondition: z.string().trim().min(1),
+  urgencyLevel: urgencyLevelSchema,
+  assessmentSummary: z.string().trim().min(1),
+  prescribedEquipment: z.array(prescribedEquipmentItemSchema).min(1),
+  usageRecommendation: z.union([z.string().trim().min(1), z.literal("")]).optional(),
+  equipmentNote: z.union([z.string().trim().min(1), z.literal("")]).optional(),
 });
 
 export const equipmentStatusSchema = z.enum(EQUIPMENT_STATUSES);
@@ -245,6 +267,9 @@ export type Location = z.infer<typeof locationSchema>;
 export type MediaAsset = z.infer<typeof mediaAssetSchema>;
 export type MedicalAssessment = z.infer<typeof medicalAssessmentSchema>;
 export type Patient = z.infer<typeof patientSchema>;
+export type UrgencyLevel = z.infer<typeof urgencyLevelSchema>;
+export type PrescribedEquipmentItem = z.infer<typeof prescribedEquipmentItemSchema>;
+export type AssessmentForm = z.infer<typeof assessmentFormSchema>;
 export type EquipmentStatus = z.infer<typeof equipmentStatusSchema>;
 export type EquipmentType = z.infer<typeof equipmentTypeSchema>;
 export type BorrowWorkflowStatus = z.infer<typeof borrowWorkflowStatusSchema>;

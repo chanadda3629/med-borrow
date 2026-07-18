@@ -51,3 +51,21 @@ export function toThaiEquipmentStatus(value: string): string {
 export function toThaiWorkflowStatus(value: string): string {
   return WORKFLOW_STATUS_CODE_TO_TH[value] ?? value
 }
+
+// Reverse resolvers: Thai label -> English reference code, for turning a Thai
+// filter-chip value back into the code stored in the DB. A value that is already
+// a code (or unknown) passes through unchanged.
+function invert(map: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(Object.entries(map).map(([code, th]) => [th, code]))
+}
+
+const EQUIPMENT_TYPE_TH_TO_CODE = invert(EQUIPMENT_TYPE_CODE_TO_TH)
+const EQUIPMENT_STATUS_TH_TO_CODE = invert(EQUIPMENT_STATUS_CODE_TO_TH)
+
+export function toEquipmentTypeCode(value: string): string {
+  return EQUIPMENT_TYPE_TH_TO_CODE[value] ?? value
+}
+
+export function toEquipmentStatusCode(value: string): string {
+  return EQUIPMENT_STATUS_TH_TO_CODE[value] ?? value
+}

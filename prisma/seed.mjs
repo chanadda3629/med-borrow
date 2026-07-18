@@ -371,6 +371,31 @@ const patientData = [
     urgencyLevel: "ต่ำ",
     createdAt: new Date("2026-06-21"),
   },
+  {
+    id: "patient-009",
+    fullName: "นาง สมหญิง ใจดี",
+    nationalId: "1103700123456",
+    dateOfBirth: new Date("1948-09-05"),
+    age: 77,
+    gender: "หญิง",
+    phoneNumber: "0812345678",
+    reporterName: "นางสาว กมลชนก ใจดี",
+    houseNumber: "58/2",
+    moo: "4",
+    province: "ชลบุรี",
+    district: "ศรีราชา",
+    subdistrict: "สุรศักดิ์",
+    postalCode: "20110",
+    latitude: 13.1721,
+    longitude: 100.9312,
+    googleMapsUrl: "https://maps.google.com/?q=13.1721,100.9312",
+    chronicDiseases: ["โรคหลอดเลือดสมอง"],
+    walkingAbility: "bedridden",
+    selfCareAbility: "needs_assistance",
+    patientCondition: "ผู้ป่วยติดเตียงหลังเส้นเลือดในสมองแตก ช่วยเหลือตนเองไม่ได้ รอการประเมิน",
+    urgencyLevel: "สูง",
+    createdAt: new Date("2026-07-16"),
+  },
 ];
 
 // ─── Medical Assessments ──────────────────────────────────────────────────────
@@ -632,6 +657,20 @@ const borrowingRequestData = [
     dueOrReturnDate: null,
     createdAt: new Date("2026-06-21"),
   },
+  // BR-009: ASSESSING_PATIENT — patient-009, no equipment type chosen yet
+  {
+    id: "req-009",
+    requestNumber: "BR-2026-0009",
+    patientId: "patient-009",
+    requestedEquipmentType: "",
+    aiRecommendationResult: null,
+    assignedEquipmentItemId: null,
+    workflowStatus: "assessing_patient",
+    approvalDecision: null,
+    deliveryStatus: null,
+    dueOrReturnDate: null,
+    createdAt: new Date("2026-07-16"),
+  },
 ];
 
 // ─── Borrowing Request Status Histories ───────────────────────────────────────
@@ -715,6 +754,10 @@ const statusHistories = [
     ["assessing_patient", "ai_recommended", 2],
   ], req007Base),
   // BR-008: → received (no transition yet)
+  // BR-009: → assessing_patient
+  ...makeHistory("req-009", [
+    ["received", "assessing_patient", 1],
+  ], new Date("2026-07-16")),
 ];
 
 // ─── Equipment Item Status Histories ─────────────────────────────────────────

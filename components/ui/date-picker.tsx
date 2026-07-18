@@ -310,7 +310,7 @@ export function DatePicker({
             {wheelOpen ? (
               <div className="flex flex-col">
                 <div className="text-center text-sm font-medium text-gray-400 pb-2">
-                  เลือกเดือนและปีเกิด
+                  เลือกเดือนและปี
                 </div>
 
                 <div className="relative">

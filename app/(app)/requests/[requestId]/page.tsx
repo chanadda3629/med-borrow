@@ -6,7 +6,9 @@ import {
   isBorrowWorkflowTerminal,
 } from "@/lib/domain/transitions"
 import type { BorrowWorkflowStatus } from "@/lib/domain/schemas"
-import { aiRecommendationResultSchema } from "@/lib/domain/schemas"
+import { aiRecommendationResultSchema, prescribedEquipmentItemSchema } from "@/lib/domain/schemas"
+import { z } from "zod"
+import { formatThaiDate } from "@/lib/utils/format-thai-date"
 import {
   toThaiWorkflowStatus,
   toThaiEquipmentType,
@@ -40,13 +42,19 @@ export default async function RequestDetailPage({ params }: PageProps) {
   const request = await db.borrowingRequest.findUnique({
     where: { id: requestId },
     include: {
-      patient: true,
+      patient: { include: { medicalAssessment: true } },
       assignedEquipmentItem: true,
       statusHistory: { orderBy: { changedAt: "desc" } },
     },
   })
 
   if (!request) notFound()
+
+  // Parse the prescribed-equipment list recorded during assessment (JSON column).
+  const assessment = request.patient.medicalAssessment
+  const prescribedEquipment = z
+    .array(prescribedEquipmentItemSchema)
+    .safeParse(assessment?.prescribedEquipment ?? [])
 
   const session = await getSession()
   const isAdmin = session.user.role === "ADMIN"
@@ -68,12 +76,20 @@ export default async function RequestDetailPage({ params }: PageProps) {
     (s) => s === "อนุมัติ" || s === "ไม่อนุมัติ",
   )
   const returnStatuses = nextStatuses.filter((s) => s === "คืนอุปกรณ์")
-  const advanceStatuses = nextStatuses.filter(
-    (s) => s !== "อนุมัติ" && s !== "ไม่อนุมัติ" && s !== "คืนอุปกรณ์",
-  )
 
+  const needsAssessPage = currentStatus === "ประเมินผู้ป่วย"
   const needsApprovalPage = currentStatus === "ตรวจสอบคลังอุปกรณ์"
   const needsReturnPage = currentStatus === "รอคืน"
+
+  // The assessment stage advances via the dedicated assess form (which records the
+  // clinical finding + equipment), not the generic one-tap advance button.
+  const advanceStatuses = nextStatuses.filter(
+    (s) =>
+      s !== "อนุมัติ" &&
+      s !== "ไม่อนุมัติ" &&
+      s !== "คืนอุปกรณ์" &&
+      !(needsAssessPage && s === "AI แนะนำอุปกรณ์"),
+  )
 
   return (
     <div>
@@ -103,6 +119,43 @@ export default async function RequestDetailPage({ params }: PageProps) {
             <Row label="ประเภทอุปกรณ์ที่ขอ" value={toThaiEquipmentType(request.requestedEquipmentType)} />
           </CardContent>
         </Card>
+
+        {/* Assessment result (recorded at the "ประเมินผู้ป่วย" stage) */}
+        {assessment?.assessmentSummary && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">ผลการประเมินและสั่งใช้อุปกรณ์</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Row label="ผู้ประเมิน" value={assessment.assessorName ?? "-"} />
+              {assessment.assessedAt && (
+                <Row label="วันที่ประเมิน" value={formatThaiDate(assessment.assessedAt)} />
+              )}
+              <Row label="ระดับความเร่งด่วน" value={assessment.urgencyLevel} />
+              <Row label="ประเมินอาการเบื้องต้น" value={assessment.assessmentSummary} />
+              {prescribedEquipment.success && prescribedEquipment.data.length > 0 && (
+                <Row
+                  label="อุปกรณ์ที่สั่งใช้"
+                  value={
+                    <ul className="space-y-0.5">
+                      {prescribedEquipment.data.map((e) => (
+                        <li key={e.equipmentType}>
+                          {toThaiEquipmentType(e.equipmentType)} × {e.quantity}
+                        </li>
+                      ))}
+                    </ul>
+                  }
+                />
+              )}
+              {assessment.usageRecommendation && (
+                <Row label="คำแนะนำการใช้อุปกรณ์" value={assessment.usageRecommendation} />
+              )}
+              {assessment.equipmentNote && (
+                <Row label="หมายเหตุ" value={assessment.equipmentNote} />
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* AI recommendation */}
         {aiResult?.success && (
@@ -226,6 +279,13 @@ export default async function RequestDetailPage({ params }: PageProps) {
               <CardTitle className="text-base">การดำเนินการถัดไป</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              {/* Assessment stage → link to the assessment form */}
+              {needsAssessPage && (
+                <Link href={`/requests/${requestId}/assess`} className="block">
+                  <Button className="w-full">ประเมินผู้ป่วยและสั่งใช้อุปกรณ์</Button>
+                </Link>
+              )}
+
               {/* Approval stage → link to approve page */}
               {needsApprovalPage && approveStatuses.length > 0 && (
                 <Link href={`/requests/${requestId}/approve`} className="block">
