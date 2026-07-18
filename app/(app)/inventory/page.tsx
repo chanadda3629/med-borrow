@@ -1,12 +1,17 @@
 import Link from "next/link"
-import { Package } from "lucide-react"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { EQUIPMENT_TYPES, EQUIPMENT_STATUSES } from "@/lib/domain/constants"
+import {
+  toThaiEquipmentType,
+  toThaiEquipmentStatus,
+  toEquipmentTypeCode,
+  toEquipmentStatusCode,
+} from "@/lib/domain/labels"
 import { PageHeader } from "@/components/layout/PageHeader"
-import { StatusBadge } from "@/components/shared/StatusBadge"
 import { Button } from "@/components/ui/button"
 import { InventoryFilters } from "./_components/InventoryFilters"
+import { InventoryTable } from "./_components/InventoryTable"
 
 interface PageProps {
   searchParams: Promise<{ type?: string; status?: string; q?: string; sort?: string }>
@@ -19,13 +24,45 @@ export default async function InventoryPage({ searchParams }: PageProps) {
   const session = await auth()
   const isAdmin = session?.user?.role === "ADMIN"
 
+  // Filter chips carry Thai labels, but rows may be stored as English reference
+  // codes (see seed.mjs) — match either form. Codes are ordered by equipmentCode
+  // so the list reads like the request records (BED-2023-001, BED-2023-002, …).
   const items = await db.equipmentItem.findMany({
     where: {
-      ...(type ? { equipmentType: type } : {}),
-      ...(status ? { currentStatus: status } : {}),
-      ...(q ? { assetNumber: { contains: q, mode: "insensitive" } } : {}),
+      ...(type ? { equipmentType: { in: [type, toEquipmentTypeCode(type)] } } : {}),
+      ...(status ? { currentStatus: { in: [status, toEquipmentStatusCode(status)] } } : {}),
+      ...(q
+        ? {
+            OR: [
+              { equipmentCode: { contains: q, mode: "insensitive" } },
+              { assetNumber: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : {}),
     },
-    orderBy: { createdAt: sort === "asc" ? "asc" : "desc" },
+    orderBy: { equipmentCode: sort === "desc" ? "desc" : "asc" },
+    include: { currentLoanRequest: { select: { requestNumber: true } } },
+  })
+
+  const rows = items.map((item) => {
+    const status = toThaiEquipmentStatus(item.currentStatus)
+    // สภาพ (physical condition) reflects the item's health: an item out for
+    // maintenance or flagged damaged shows that here, otherwise its stored
+    // condition ("ดี"). Colors: ดี green, ซ่อมบำรุง yellow, ชำรุด red.
+    const condition =
+      status === "ซ่อมบำรุง" ? "ซ่อมบำรุง" : status === "ชำรุด" ? "ชำรุด" : item.condition
+
+    return {
+      id: item.id,
+      equipmentCode: item.equipmentCode,
+      assetNumber: item.assetNumber,
+      equipmentType: toThaiEquipmentType(item.equipmentType),
+      currentStatus: status,
+      condition,
+      donorName: item.donorName,
+      receivedDate: item.receivedDate.toISOString(),
+      currentRequestNumber: item.currentLoanRequest?.requestNumber ?? null,
+    }
   })
 
   return (
@@ -41,7 +78,7 @@ export default async function InventoryPage({ searchParams }: PageProps) {
         }
       />
 
-      <div className="p-4 space-y-4 pb-24">
+      <div className="mx-auto w-full max-w-5xl space-y-4 p-4 pb-24">
         <InventoryFilters
           equipmentTypes={[...EQUIPMENT_TYPES]}
           equipmentStatuses={[...EQUIPMENT_STATUSES]}
@@ -51,38 +88,10 @@ export default async function InventoryPage({ searchParams }: PageProps) {
           currentSort={sort}
         />
 
-        {items.length === 0 ? (
+        {rows.length === 0 ? (
           <div className="text-center py-16 text-gray-400">ไม่พบรายการอุปกรณ์</div>
         ) : (
-          <div className="space-y-2">
-            {items.map((item) => (
-              <Link
-                key={item.id}
-                href={`/inventory/${item.id}`}
-                className="block bg-white rounded-xl border border-gray-200 p-4 hover:border-blue-300 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                    <Package className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="font-semibold text-gray-900 truncate">
-                        {item.assetNumber}
-                      </p>
-                      <StatusBadge status={item.currentStatus} type="equipment" />
-                    </div>
-                    <p className="text-sm text-gray-500 truncate">
-                      {item.equipmentType}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      รับเข้า {item.receivedDate.toLocaleDateString("th-TH")}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <InventoryTable rows={rows} />
         )}
       </div>
     </div>
