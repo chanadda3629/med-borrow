@@ -22,7 +22,7 @@ Authoritative docs (read before coding):
 - **Backend:** Next.js Route Handlers + Server Actions
 - **ORM/DB:** Prisma + PostgreSQL (Neon free tier in cloud, local Postgres in dev)
 - **Auth:** Auth.js (NextAuth), credentials, role-gated admin
-- **AI:** OpenRouter gateway → Gemini primary (`google/gemini-2.0-flash`), server-side only
+- **AI:** OpenRouter gateway → Gemini primary (`google/gemini-2.5-flash`), server-side only
 - **Maps:** Leaflet + react-leaflet + OSM tiles + Nominatim geocoding + Leaflet.heat
 - **Media:** Cloudinary (free tier)
 - **Notifications:** LINE Messaging API (one-way push)

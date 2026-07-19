@@ -2,14 +2,19 @@
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { returnDataSchema } from "@/lib/domain/schemas"
+import { toThaiWorkflowStatus } from "@/lib/domain/labels"
 import { fireAndForgetLineNotification } from "@/lib/integrations/line/fire-and-forget"
+
+interface ReturnPhotoInput {
+  url: string
+  publicId?: string
+}
 
 interface ReturnInput {
   requestId: string
   returnDate: string
   receivingStaffName: string
-  equipmentPhotoUrl: string
-  equipmentPhotoPublicId?: string
+  equipmentPhotos: ReturnPhotoInput[]
   condition: "ใช้งานได้" | "ชำรุด"
   damageNote?: string
 }
@@ -19,7 +24,11 @@ export async function processReturn(input: ReturnInput) {
     returnDataSchema.parse({
       returnDate: new Date(input.returnDate),
       receivingStaffName: input.receivingStaffName,
-      equipmentPhoto: { url: input.equipmentPhotoUrl, kind: "return-condition-photo" },
+      equipmentPhotos: input.equipmentPhotos.map((photo) => ({
+        url: photo.url,
+        publicId: photo.publicId,
+        kind: "return-condition-photo",
+      })),
       condition: input.condition,
       damageNote: input.damageNote,
     })
@@ -32,6 +41,11 @@ export async function processReturn(input: ReturnInput) {
 
     const newItemStatus = input.condition === "ใช้งานได้" ? "พร้อมใช้งาน" : "ชำรุด"
     const returnDate = new Date(input.returnDate)
+    const [primaryPhoto] = input.equipmentPhotos
+    const equipmentPhotos = input.equipmentPhotos.map((photo) => ({
+      url: photo.url,
+      publicId: photo.publicId ?? null,
+    }))
 
     await db.$transaction([
       db.borrowingReturn.create({
@@ -42,8 +56,9 @@ export async function processReturn(input: ReturnInput) {
           receivingStaffName: input.receivingStaffName,
           condition: input.condition,
           damageNote: input.damageNote,
-          equipmentPhotoUrl: input.equipmentPhotoUrl,
-          equipmentPhotoPublicId: input.equipmentPhotoPublicId,
+          equipmentPhotoUrl: primaryPhoto.url,
+          equipmentPhotoPublicId: primaryPhoto.publicId,
+          equipmentPhotos,
         },
       }),
       db.equipmentItem.update({
@@ -55,7 +70,7 @@ export async function processReturn(input: ReturnInput) {
         data: { workflowStatus: "คืนอุปกรณ์" },
       }),
       db.borrowingRequestStatusHistory.create({
-        data: { requestId: input.requestId, fromStatus: request.workflowStatus, toStatus: "คืนอุปกรณ์" },
+        data: { requestId: input.requestId, fromStatus: toThaiWorkflowStatus(request.workflowStatus), toStatus: "คืนอุปกรณ์" },
       }),
       db.equipmentItemStatusHistory.create({
         data: {
@@ -72,8 +87,9 @@ export async function processReturn(input: ReturnInput) {
           returnDate,
           receivingStaffName: input.receivingStaffName,
           damageNote: input.damageNote,
-          equipmentPhotoUrl: input.equipmentPhotoUrl,
-          equipmentPhotoPublicId: input.equipmentPhotoPublicId,
+          equipmentPhotoUrl: primaryPhoto.url,
+          equipmentPhotoPublicId: primaryPhoto.publicId,
+          equipmentPhotos,
         },
       }),
     ])

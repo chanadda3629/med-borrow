@@ -1,76 +1,69 @@
 import { notFound, redirect } from "next/navigation"
 import { db } from "@/lib/db"
+import { toThaiEquipmentType, toThaiWorkflowStatus } from "@/lib/domain/labels"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatThaiDate } from "@/lib/utils/format-thai-date"
-import { ReturnForm } from "./_components/ReturnForm"
+import { PrepareDeliveryForm } from "./_components/PrepareDeliveryForm"
 
 interface PageProps {
   params: Promise<{ requestId: string }>
 }
 
-export default async function ReturnPage({ params }: PageProps) {
+export default async function PrepareDeliveryPage({ params }: PageProps) {
   const { requestId } = await params
 
   const request = await db.borrowingRequest.findUnique({
     where: { id: requestId },
     include: {
       patient: { select: { fullName: true } },
-      assignedEquipmentItem: { select: { assetNumber: true, equipmentType: true } },
+      assignedEquipmentItem: {
+        select: { assetNumber: true, equipmentCode: true, equipmentType: true },
+      },
     },
   })
 
   if (!request) notFound()
 
-  if (request.workflowStatus !== "รอคืน") {
+  // เตรียมจัดส่ง only follows อนุมัติ. Normalize legacy English-coded statuses.
+  if (toThaiWorkflowStatus(request.workflowStatus) !== "อนุมัติ") {
     redirect(`/requests/${requestId}`)
   }
 
   return (
     <div>
-      <PageHeader title="บันทึกการรับคืนอุปกรณ์" showBack />
+      <PageHeader title="เตรียมจัดส่ง" showBack />
 
       <div className="p-4 space-y-4">
-        {/* Request summary */}
+        {/* Equipment to deliver (assigned at approval) */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">ข้อมูลคำร้อง</CardTitle>
+            <CardTitle className="text-base">อุปกรณ์ที่ต้องการจัดส่ง</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Row label="เลขที่คำร้อง" value={request.requestNumber} />
             <Row label="ผู้ป่วย" value={request.patient.fullName} />
-            {request.dueOrReturnDate && (
-              <Row label="กำหนดคืน" value={formatThaiDate(request.dueOrReturnDate)} />
-            )}
-            {request.assignedEquipmentItem && (
+            {request.assignedEquipmentItem ? (
               <>
                 <Row
-                  label="หมายเลขครุภัณฑ์"
-                  value={request.assignedEquipmentItem.assetNumber}
-                />
-                <Row
                   label="ประเภทอุปกรณ์"
-                  value={request.assignedEquipmentItem.equipmentType}
+                  value={toThaiEquipmentType(request.assignedEquipmentItem.equipmentType)}
                 />
+                <Row label="หมายเลขครุภัณฑ์" value={request.assignedEquipmentItem.assetNumber} />
+                <Row label="รหัสอุปกรณ์" value={request.assignedEquipmentItem.equipmentCode} />
               </>
+            ) : (
+              <p className="text-sm text-gray-400">ยังไม่มีอุปกรณ์ที่จัดสรร</p>
             )}
           </CardContent>
         </Card>
 
-        {/* Return form */}
+        {/* Delivery plan form */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">แบบฟอร์มรับคืนอุปกรณ์</CardTitle>
+            <CardTitle className="text-base">ข้อมูลการจัดส่ง</CardTitle>
           </CardHeader>
           <CardContent>
-            <ReturnForm
-              requestId={requestId}
-              maxDate={
-                request.dueOrReturnDate
-                  ? request.dueOrReturnDate.toISOString().slice(0, 10)
-                  : undefined
-              }
-            />
+            <PrepareDeliveryForm requestId={requestId} />
           </CardContent>
         </Card>
       </div>

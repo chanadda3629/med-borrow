@@ -10,8 +10,6 @@ import {
   Package,
   Check,
   Loader2,
-  Minus,
-  Plus,
 } from "lucide-react"
 import { EQUIPMENT_TYPES, URGENCY_LEVELS } from "@/lib/domain/constants"
 import { assessRequest } from "@/lib/actions/requests/assess-request"
@@ -48,6 +46,8 @@ interface AssessmentFormProps {
   initial: AssessmentInitialValues
 }
 
+const MAX_EQUIPMENT = 3
+
 function todayISO() {
   return new Date().toISOString().split("T")[0]
 }
@@ -63,29 +63,27 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
   const [usageRecommendation, setUsageRecommendation] = useState(initial.usageRecommendation)
   const [equipmentNote, setEquipmentNote] = useState(initial.equipmentNote)
 
-  // Equipment checklist: type -> quantity. Presence in the map = checked.
-  const [quantities, setQuantities] = useState<Record<string, number>>(() =>
-    Object.fromEntries(initial.prescribedEquipment.map((e) => [e.equipmentType, e.quantity])),
+  // Equipment checklist: selected types. Each selected type is a single unit (quantity 1),
+  // and a request may select at most MAX_EQUIPMENT types.
+  const [selected, setSelected] = useState<EquipmentType[]>(() =>
+    initial.prescribedEquipment.map((e) => e.equipmentType),
   )
 
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   function toggleEquipment(type: EquipmentType) {
-    setQuantities((prev) => {
-      const next = { ...prev }
-      if (type in next) {
-        delete next[type]
-      } else {
-        next[type] = 1
-      }
-      return next
-    })
+    if (selected.includes(type)) {
+      setSelected((prev) => prev.filter((t) => t !== type))
+      setError(null)
+      return
+    }
+    if (selected.length >= MAX_EQUIPMENT) {
+      setError(`เลือกอุปกรณ์ได้สูงสุด ${MAX_EQUIPMENT} รายการ`)
+      return
+    }
+    setSelected((prev) => [...prev, type])
     setError(null)
-  }
-
-  function setQuantity(type: EquipmentType, qty: number) {
-    setQuantities((prev) => ({ ...prev, [type]: Math.min(99, Math.max(1, qty)) }))
   }
 
   function handleReset() {
@@ -96,20 +94,22 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
     setAssessmentSummary("")
     setUsageRecommendation("")
     setEquipmentNote("")
-    setQuantities({})
+    setSelected([])
     setError(null)
   }
 
   async function handleSubmit() {
-    const prescribedEquipment = Object.entries(quantities).map(([equipmentType, quantity]) => ({
+    const prescribedEquipment = selected.map((equipmentType) => ({
       equipmentType,
-      quantity,
+      quantity: 1,
     }))
 
     if (!assessorName.trim()) return setError("กรุณากรอกชื่อผู้ประเมิน")
     if (!patientCondition.trim()) return setError("กรุณากรอกอาการป่วยของผู้ป่วย")
     if (!assessmentSummary.trim()) return setError("กรุณากรอกผลการประเมินอาการเบื้องต้น")
     if (prescribedEquipment.length === 0) return setError("กรุณาเลือกอุปกรณ์อย่างน้อย 1 รายการ")
+    if (prescribedEquipment.length > MAX_EQUIPMENT)
+      return setError(`เลือกอุปกรณ์ได้สูงสุด ${MAX_EQUIPMENT} รายการ`)
 
     setError(null)
     setSubmitting(true)
@@ -244,46 +244,40 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label>
-              ชื่ออุปกรณ์ (เลือกได้หลายรายการ) <span className="text-red-500">*</span>
+            <Label className="flex items-center justify-between">
+              <span>
+                ชื่ออุปกรณ์ (เลือกได้ 1–{MAX_EQUIPMENT} รายการ) <span className="text-red-500">*</span>
+              </span>
+              <span className="text-xs font-normal text-gray-500">
+                เลือกแล้ว {selected.length}/{MAX_EQUIPMENT}
+              </span>
             </Label>
             <div className="mt-2 space-y-2">
               {EQUIPMENT_TYPES.map((type) => {
-                const checked = type in quantities
+                const checked = selected.includes(type)
+                const disabled = !checked && selected.length >= MAX_EQUIPMENT
                 return (
-                  <div
+                  <button
                     key={type}
+                    type="button"
+                    onClick={() => toggleEquipment(type)}
+                    disabled={disabled}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl border-2 p-3 transition-colors",
+                      "flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors",
                       checked ? "border-blue-500 bg-blue-50" : "border-gray-200",
+                      disabled && "cursor-not-allowed opacity-40",
                     )}
                   >
-                    <button
-                      type="button"
-                      onClick={() => toggleEquipment(type)}
-                      className="flex flex-1 items-center gap-3 text-left"
+                    <span
+                      className={cn(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2",
+                        checked ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300",
+                      )}
                     >
-                      <span
-                        className={cn(
-                          "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2",
-                          checked ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300",
-                        )}
-                      >
-                        {checked && <Check className="h-3.5 w-3.5" />}
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">{type}</span>
-                    </button>
-
-                    {checked && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-gray-500">จำนวน</span>
-                        <QuantityStepper
-                          value={quantities[type]}
-                          onChange={(q) => setQuantity(type, q)}
-                        />
-                      </div>
-                    )}
-                  </div>
+                      {checked && <Check className="h-3.5 w-3.5" />}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900">{type}</span>
+                  </button>
                 )
               })}
             </div>
@@ -341,32 +335,6 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
           )}
         </Button>
       </div>
-    </div>
-  )
-}
-
-function QuantityStepper({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  return (
-    <div className="flex items-center rounded-lg border border-gray-300 bg-white">
-      <button
-        type="button"
-        onClick={() => onChange(value - 1)}
-        disabled={value <= 1}
-        aria-label="ลดจำนวน"
-        className="flex h-9 w-9 items-center justify-center text-gray-600 disabled:opacity-30"
-      >
-        <Minus className="h-4 w-4" />
-      </button>
-      <span className="w-7 text-center text-sm font-semibold text-gray-900">{value}</span>
-      <button
-        type="button"
-        onClick={() => onChange(value + 1)}
-        disabled={value >= 99}
-        aria-label="เพิ่มจำนวน"
-        className="flex h-9 w-9 items-center justify-center text-gray-600 disabled:opacity-30"
-      >
-        <Plus className="h-4 w-4" />
-      </button>
     </div>
   )
 }

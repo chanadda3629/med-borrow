@@ -7,22 +7,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { DatePicker } from "@/components/ui/date-picker"
-import { PhotoUploadField } from "@/components/forms/PhotoUploadField"
+import { PhotoGalleryUploadField } from "@/components/forms/PhotoGalleryUploadField"
 
 interface ReturnFormProps {
   requestId: string
+  /** กำหนดคืน (due date) — the latest date allowed for the return, ISO yyyy-mm-dd. */
+  maxDate?: string
 }
 
-export function ReturnForm({ requestId }: ReturnFormProps) {
+export function ReturnForm({ requestId, maxDate }: ReturnFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [returnDate, setReturnDate] = useState(
-    () => new Date().toISOString().slice(0, 10),
-  )
+  const [returnDate, setReturnDate] = useState(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    // If today is already past the due date, default to the due date so it stays in range.
+    return maxDate && today > maxDate ? maxDate : today
+  })
   const [receivingStaffName, setReceivingStaffName] = useState("")
-  const [photo, setPhoto] = useState<{ url: string; publicId: string } | undefined>()
+  const [photos, setPhotos] = useState<{ url: string; publicId: string }[]>([])
   const [condition, setCondition] = useState<"ใช้งานได้" | "ชำรุด">("ใช้งานได้")
   const [damageNote, setDamageNote] = useState("")
 
@@ -32,7 +36,7 @@ export function ReturnForm({ requestId }: ReturnFormProps) {
 
     if (!returnDate) { setError("กรุณาเลือกวันที่รับคืน"); return }
     if (!receivingStaffName.trim()) { setError("กรุณากรอกชื่อเจ้าหน้าที่ผู้รับคืน"); return }
-    if (!photo) { setError("กรุณาถ่ายรูปสภาพอุปกรณ์"); return }
+    if (photos.length < 1) { setError("กรุณาถ่ายรูปสภาพอุปกรณ์อย่างน้อย 1 รูป"); return }
     if (condition === "ชำรุด" && !damageNote.trim()) {
       setError("กรุณากรอกรายละเอียดความเสียหาย")
       return
@@ -44,8 +48,7 @@ export function ReturnForm({ requestId }: ReturnFormProps) {
         requestId,
         returnDate,
         receivingStaffName: receivingStaffName.trim(),
-        equipmentPhotoUrl: photo.url,
-        equipmentPhotoPublicId: photo.publicId,
+        equipmentPhotos: photos,
         condition,
         damageNote: condition === "ชำรุด" ? damageNote.trim() : undefined,
       })
@@ -69,7 +72,7 @@ export function ReturnForm({ requestId }: ReturnFormProps) {
           id="returnDate"
           value={returnDate}
           onChange={setReturnDate}
-          max={new Date().toISOString().slice(0, 10)}
+          max={maxDate}
           placeholder="เลือกวันที่รับคืน"
         />
       </div>
@@ -86,11 +89,14 @@ export function ReturnForm({ requestId }: ReturnFormProps) {
       </div>
 
       <div className="space-y-1.5">
-        <Label>รูปภาพสภาพอุปกรณ์</Label>
-        <PhotoUploadField
-          value={photo}
-          onChange={setPhoto}
-          label="ถ่ายรูปอุปกรณ์"
+        <Label>
+          รูปภาพสภาพอุปกรณ์{" "}
+          <span className="text-xs font-normal text-gray-500">(อย่างน้อย 1 รูป สูงสุด 3 รูป)</span>
+        </Label>
+        <PhotoGalleryUploadField
+          value={photos}
+          onChange={setPhotos}
+          max={3}
         />
       </div>
 

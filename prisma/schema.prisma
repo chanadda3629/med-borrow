@@ -131,6 +131,14 @@ model BorrowingRequest {
   assignedEquipmentItemId  String?
   workflowStatus           String
   approvalDecision         String?
+  approverName             String?
+  rejectionReason          String?
+  requestDetail            String?
+  deliveryDate             DateTime?
+  delivererName            String?
+  loanDetail               String?
+  receivedDate             DateTime?
+  receiverName             String?
   deliveryStatus           String?
   dueOrReturnDate          DateTime?
   createdAt                DateTime                        @default(now())
@@ -172,6 +180,7 @@ model BorrowingReturn {
   damageNote             String?
   equipmentPhotoUrl      String
   equipmentPhotoPublicId String?
+  equipmentPhotos        Json?
   createdAt              DateTime         @default(now())
   updatedAt              DateTime         @updatedAt
   equipmentItem          EquipmentItem    @relation("BorrowingReturnEquipmentItem", fields: [equipmentItemId], references: [id])
@@ -190,6 +199,7 @@ model EquipmentItemReturnHistory {
   damageNote             String?
   equipmentPhotoUrl      String
   equipmentPhotoPublicId String?
+  equipmentPhotos        Json?
   createdAt              DateTime          @default(now())
   updatedAt              DateTime          @updatedAt
   equipmentItem          EquipmentItem     @relation(fields: [equipmentItemId], references: [id], onDelete: Cascade)

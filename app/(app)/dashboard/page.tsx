@@ -58,7 +58,7 @@ export default async function DashboardPage() {
   ])
 
   const actionItems: ActionQueueItem[] = [
-    { href: "/requests?status=ประเมินผู้ป่วย", label: "คำร้องรอประเมิน", count: assessCount, tone: "sky" },
+    { href: "/requests?status=ประเมินผู้ป่วย", label: "คำร้องที่รอประเมิน", count: assessCount, tone: "sky" },
     { href: "/requests?status=ตรวจสอบคลังอุปกรณ์", label: "รออนุมัติจ่ายอุปกรณ์", count: approvalCount, tone: "violet" },
     { href: "/requests?status=อนุมัติ", label: "รอจัดส่ง", count: deliveryCount, tone: "emerald" },
   ]
@@ -70,7 +70,8 @@ export default async function DashboardPage() {
       id: req.id,
       href: `/requests/${req.id}`,
       patientName: req.patient.fullName,
-      equipmentLabel: item ? `${type} · ${item.assetNumber}` : type,
+      equipmentType: type,
+      assetNumber: item?.assetNumber ?? null,
       daysRemaining: daysUntil(req.dueOrReturnDate!),
     }
   })

@@ -1,7 +1,17 @@
+import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
 import { db } from "@/lib/db"
+import { EQUIPMENT_STATUSES } from "@/lib/domain/constants"
+import {
+  toThaiWorkflowStatus,
+  toThaiEquipmentType,
+  toThaiEquipmentStatus,
+  toEquipmentTypeCode,
+} from "@/lib/domain/labels"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatusBadge } from "@/components/shared/StatusBadge"
+import { EquipmentIcon } from "@/app/(app)/dashboard/_components/equipment-icons"
 import { ApproveRequestForm } from "./_components/ApproveRequestForm"
 
 interface PageProps {
@@ -18,20 +28,43 @@ export default async function ApproveRequestPage({ params }: PageProps) {
 
   if (!request) notFound()
 
-  // Only allow approval when in the correct workflow stage
-  if (request.workflowStatus !== "ตรวจสอบคลังอุปกรณ์") {
+  // Only allow approval when in the correct workflow stage. Normalize legacy
+  // English-coded statuses first (matches the deliver/loan/detail pages).
+  if (toThaiWorkflowStatus(request.workflowStatus) !== "ตรวจสอบคลังอุปกรณ์") {
     redirect(`/requests/${requestId}`)
   }
 
-  // Load available items of the requested equipment type
-  const availableItems = await db.equipmentItem.findMany({
-    where: {
-      equipmentType: request.requestedEquipmentType,
-      currentStatus: "พร้อมใช้งาน",
-      currentLoanRequestId: null,
-    },
-    orderBy: { assetNumber: "asc" },
+  // The requested type — and every equipment row — may be stored either as a Thai
+  // label or as an English reference code (see prisma/seed.mjs). Match both forms
+  // so the inventory summary and allocation list mirror the คลังอุปกรณ์ page.
+  const thaiType = toThaiEquipmentType(request.requestedEquipmentType)
+  const typeCandidates = Array.from(
+    new Set([request.requestedEquipmentType, toEquipmentTypeCode(request.requestedEquipmentType), thaiType]),
+  )
+
+  const itemsOfType = await db.equipmentItem.findMany({
+    where: { equipmentType: { in: typeCandidates } },
+    orderBy: { equipmentCode: "asc" },
   })
+
+  // Count items of this type per (Thai-normalized) status, for the คลังอุปกรณ์
+  // summary. Ordered by the canonical status list so the breakdown reads the same
+  // way every time.
+  const statusCounts = new Map<string, number>()
+  for (const item of itemsOfType) {
+    const status = toThaiEquipmentStatus(item.currentStatus)
+    statusCounts.set(status, (statusCounts.get(status) ?? 0) + 1)
+  }
+  const statusBreakdown = EQUIPMENT_STATUSES.map((status) => ({
+    status,
+    count: statusCounts.get(status) ?? 0,
+  })).filter((row) => row.count > 0)
+
+  // Allocatable items: ready ("พร้อมใช้งาน") and not already bound to a loan.
+  const availableItems = itemsOfType.filter(
+    (item) =>
+      toThaiEquipmentStatus(item.currentStatus) === "พร้อมใช้งาน" && !item.currentLoanRequestId,
+  )
 
   return (
     <div>
@@ -46,11 +79,56 @@ export default async function ApproveRequestPage({ params }: PageProps) {
           <CardContent className="space-y-2">
             <Row label="เลขที่คำร้อง" value={request.requestNumber} />
             <Row label="ผู้ป่วย" value={request.patient.fullName} />
-            <Row label="ประเภทอุปกรณ์" value={request.requestedEquipmentType} />
+            <Row label="ประเภทอุปกรณ์" value={thaiType} />
           </CardContent>
         </Card>
 
-        {/* Available items */}
+        {/* Inventory summary — mirrors the คลังอุปกรณ์ page for the requested type */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <EquipmentIcon type={thaiType} className="h-5 w-5 text-gray-500" />
+                คลังอุปกรณ์: {thaiType}
+              </CardTitle>
+              <Link
+                href={`/inventory?type=${encodeURIComponent(thaiType)}`}
+                className="shrink-0 text-xs font-medium text-blue-600 hover:underline"
+              >
+                ดูในคลัง
+              </Link>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-baseline gap-4">
+              <div>
+                <div className="text-2xl font-semibold text-green-600">
+                  {availableItems.length}
+                </div>
+                <div className="text-xs text-gray-500">พร้อมใช้งาน</div>
+              </div>
+              <div>
+                <div className="text-2xl font-semibold text-gray-900">{itemsOfType.length}</div>
+                <div className="text-xs text-gray-500">ทั้งหมด</div>
+              </div>
+            </div>
+
+            {statusBreakdown.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {statusBreakdown.map(({ status, count }) => (
+                  <span key={status} className="inline-flex items-center gap-1.5">
+                    <StatusBadge status={status} type="equipment" />
+                    <span className="text-sm font-medium text-gray-700">{count}</span>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">ยังไม่มีอุปกรณ์ประเภทนี้ในคลัง</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Approval decision */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base">
@@ -58,25 +136,14 @@ export default async function ApproveRequestPage({ params }: PageProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {availableItems.length === 0 ? (
-              <div className="text-center py-6">
-                <p className="text-gray-500 text-sm mb-4">
-                  ไม่มีอุปกรณ์ประเภท &ldquo;{request.requestedEquipmentType}&rdquo; ที่พร้อมใช้งาน
-                </p>
-                <p className="text-xs text-gray-400">
-                  สามารถกด &ldquo;ไม่อนุมัติ&rdquo; เพื่อปฏิเสธคำร้องนี้ได้
-                </p>
-              </div>
-            ) : (
-              <ApproveRequestForm
-                requestId={requestId}
-                availableItems={availableItems.map((item) => ({
-                  id: item.id,
-                  assetNumber: item.assetNumber,
-                  equipmentCode: item.equipmentCode,
-                }))}
-              />
-            )}
+            <ApproveRequestForm
+              requestId={requestId}
+              availableItems={availableItems.map((item) => ({
+                id: item.id,
+                assetNumber: item.assetNumber,
+                equipmentCode: item.equipmentCode,
+              }))}
+            />
           </CardContent>
         </Card>
       </div>

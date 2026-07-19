@@ -75,6 +75,15 @@ export const URGENCY_LEVELS = ["ปกติ", "เร่งด่วน", "เ�
 
 export const BORROW_APPROVAL_DECISIONS = ["อนุมัติ", "ไม่อนุมัติ"] as const;
 
+// Reasons a request can be rejected at the "ตรวจสอบคลังอุปกรณ์" stage. Staff pick
+// one on the approval page when choosing "ไม่อนุมัติ".
+export const REJECTION_REASONS = [
+  "อุปกรณ์ไม่พร้อมใช้งาน",
+  "ชำรุด",
+  "กำลังซ่อมบำรุง",
+  "ไม่มีอุปกรณ์",
+] as const;
+
 export const DELIVERY_STATUSES = [
   "เตรียมจัดส่ง",
   "จัดส่งสำเร็จ",

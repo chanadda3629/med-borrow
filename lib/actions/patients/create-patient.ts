@@ -36,24 +36,34 @@ export async function createPatient(input: CreatePatientInput) {
   try {
     const requestNumber = "REQ-" + Date.now()
     const result = await db.$transaction(async (tx) => {
-      const patient = await tx.patient.create({
-        data: {
-          fullName: input.fullName,
+      // A patient may borrow more than once over time, so nationalId (unique)
+      // can already exist. Reuse the existing record and refresh the mutable
+      // contact/address details to what intake just captured, rather than
+      // failing on the unique constraint. Medical fields are only seeded on
+      // first creation — they are filled in later during assessment.
+      const contactData = {
+        fullName: input.fullName,
+        dateOfBirth: new Date(input.dateOfBirth),
+        age: input.age,
+        gender: input.gender,
+        phoneNumber: input.phoneNumber,
+        reporterName: input.reporterName?.trim() || null,
+        houseNumber: input.address.houseNumber,
+        moo: input.address.moo,
+        province: input.address.province,
+        district: input.address.district,
+        subdistrict: input.address.subdistrict,
+        postalCode: input.address.postalCode,
+        latitude: input.location.latitude,
+        longitude: input.location.longitude,
+        googleMapsUrl: input.location.googleMapsUrl,
+      }
+      const patient = await tx.patient.upsert({
+        where: { nationalId: input.nationalId },
+        update: contactData,
+        create: {
           nationalId: input.nationalId,
-          dateOfBirth: new Date(input.dateOfBirth),
-          age: input.age,
-          gender: input.gender,
-          phoneNumber: input.phoneNumber,
-          reporterName: input.reporterName?.trim() || null,
-          houseNumber: input.address.houseNumber,
-          moo: input.address.moo,
-          province: input.address.province,
-          district: input.address.district,
-          subdistrict: input.address.subdistrict,
-          postalCode: input.address.postalCode,
-          latitude: input.location.latitude,
-          longitude: input.location.longitude,
-          googleMapsUrl: input.location.googleMapsUrl,
+          ...contactData,
           // Medical fields are filled in during assessment; left empty at intake.
           chronicDiseases: [],
           walkingAbility: "",

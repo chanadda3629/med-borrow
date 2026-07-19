@@ -383,23 +383,32 @@ function Step3Photos() {
 
       <div>
         <div className="flex items-center justify-between mb-1">
-          <Label className="mb-0">รูปภาพสภาพแวดล้อมบ้าน</Label>
+          <Label className="mb-0">
+            รูปภาพสภาพแวดล้อมบ้าน <span className="text-red-500">*</span>
+          </Label>
           <Badge variant="secondary">{homeEnvPhotoCount} / {MAX_PHOTOS}</Badge>
         </div>
         <p className="text-xs text-gray-500 mb-3">
-          ถ่ายรูปภายในบ้านเพื่อประกอบการพิจารณาอุปกรณ์ (ไม่บังคับ, สูงสุด {MAX_PHOTOS} รูป)
+          ถ่ายรูปภายในบ้านเพื่อประกอบการพิจารณาอุปกรณ์อย่างน้อย 1 รูป (สูงสุด {MAX_PHOTOS} รูป)
         </p>
         <Controller
           name="homeEnvironmentPhotos"
           control={control}
+          rules={{
+            validate: (v) => (v && v.length > 0) || "กรุณาอัปโหลดรูปภาพสภาพแวดล้อมบ้านอย่างน้อย 1 รูป",
+          }}
           render={({ field }) => (
             <PhotoGalleryUploadField
               value={field.value ?? []}
-              onChange={field.onChange}
+              onChange={(photos) => {
+                field.onChange(photos)
+                void trigger("homeEnvironmentPhotos")
+              }}
               max={MAX_PHOTOS}
             />
           )}
         />
+        <FieldError message={errors.homeEnvironmentPhotos?.message as string | undefined} />
       </div>
     </div>
   )
@@ -535,7 +544,7 @@ export function PatientIntakeWizard() {
       "address.subdistrict",
       "address.postalCode",
     ],
-    2: ["patientPhotos"],
+    2: ["patientPhotos", "homeEnvironmentPhotos"],
     3: [],
   }
 

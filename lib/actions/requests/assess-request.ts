@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { canTransitionBorrowWorkflowStatus } from "@/lib/domain/transitions"
 import { assessmentFormSchema } from "@/lib/domain/schemas"
+import { toThaiWorkflowStatus } from "@/lib/domain/labels"
 import type { Prisma } from "@prisma/client"
 
 // Records the "ประเมินผู้ป่วย" assessment: staff note the patient's condition and
@@ -22,7 +23,8 @@ export async function assessRequest(requestId: string, input: unknown) {
     })
     if (!request) return err("ไม่พบคำร้อง")
 
-    const from = request.workflowStatus
+    // Normalize legacy English-coded statuses before the stage check.
+    const from = toThaiWorkflowStatus(request.workflowStatus)
     if (from !== "ประเมินผู้ป่วย") {
       return err("คำร้องนี้ไม่ได้อยู่ในขั้นตอนประเมินผู้ป่วย")
     }

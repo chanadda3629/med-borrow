@@ -61,7 +61,7 @@ Inventory is tracked **per serialized item** (unique item ID + asset number), ne
 | Concern | Choice |
 |---|---|
 | Gateway | **OpenRouter** (one API key, many models, free-tier models available) |
-| Primary model | **Gemini** (e.g. `google/gemini-2.0-flash`) |
+| Primary model | **Gemini** (e.g. `google/gemini-2.5-flash`) |
 | Fallback | secondary OpenRouter model if primary errors / rate-limits |
 | Call site | server-side Route Handler (key never exposed to client) |
 

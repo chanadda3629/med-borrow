@@ -1,10 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { db } from "@/lib/db"
-import {
-  getNextBorrowWorkflowStatuses,
-  isBorrowWorkflowTerminal,
-} from "@/lib/domain/transitions"
+import { isBorrowWorkflowTerminal } from "@/lib/domain/transitions"
 import type { BorrowWorkflowStatus } from "@/lib/domain/schemas"
 import { aiRecommendationResultSchema, prescribedEquipmentItemSchema } from "@/lib/domain/schemas"
 import { z } from "zod"
@@ -14,23 +11,15 @@ import {
   toThaiEquipmentType,
   toThaiEquipmentStatus,
 } from "@/lib/domain/labels"
-import { formatThaiDateTime } from "@/lib/format"
-import { getSession } from "@/lib/auth/get-session"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { StatusBadge } from "@/components/shared/StatusBadge"
 import { WorkflowStatusStepper } from "@/components/shared/WorkflowStatusStepper"
+import { DeliveryTracker } from "@/components/shared/DeliveryTracker"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table"
+import { CheckCircle2 } from "lucide-react"
 import { WorkflowActions } from "./_components/WorkflowActions"
-import { StatusOverride } from "./_components/StatusOverride"
+import { NextActionNav } from "./_components/NextActionNav"
 
 interface PageProps {
   params: Promise<{ requestId: string }>
@@ -44,7 +33,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
     include: {
       patient: { include: { medicalAssessment: true } },
       assignedEquipmentItem: true,
-      statusHistory: { orderBy: { changedAt: "desc" } },
+      returnRecord: true,
     },
   })
 
@@ -56,13 +45,9 @@ export default async function RequestDetailPage({ params }: PageProps) {
     .array(prescribedEquipmentItemSchema)
     .safeParse(assessment?.prescribedEquipment ?? [])
 
-  const session = await getSession()
-  const isAdmin = session.user.role === "ADMIN"
-
   // Normalize legacy/external English codes to the canonical Thai status so the
   // stepper, transition logic, and badges all work (and don't crash on unknowns).
   const currentStatus = toThaiWorkflowStatus(request.workflowStatus) as BorrowWorkflowStatus
-  const nextStatuses = getNextBorrowWorkflowStatuses(currentStatus)
   const isTerminal = isBorrowWorkflowTerminal(currentStatus)
 
   // Parse AI recommendation
@@ -71,25 +56,44 @@ export default async function RequestDetailPage({ params }: PageProps) {
     aiResult = aiRecommendationResultSchema.safeParse(request.aiRecommendationResult)
   }
 
-  // Determine which next statuses go through special pages vs generic advance
-  const approveStatuses = nextStatuses.filter(
-    (s) => s === "อนุมัติ" || s === "ไม่อนุมัติ",
-  )
-  const returnStatuses = nextStatuses.filter((s) => s === "คืนอุปกรณ์")
-
-  const needsAssessPage = currentStatus === "ประเมินผู้ป่วย"
-  const needsApprovalPage = currentStatus === "ตรวจสอบคลังอุปกรณ์"
+  // Next-action routing per stage.
+  //   Pre-delivery stages → arrow nav (← revert / → next), image1 layout.
+  //   เตรียมจัดส่ง → single forward arrow, image2 layout.
+  //   อนุมัติ / จัดส่งสำเร็จ / รอคืน → dedicated form pages.
+  //   คืนอุปกรณ์ → one-tap advance to ปิดรายการ.
+  const PRE_DELIVERY_STATUSES = ["รับคำร้อง", "ประเมินผู้ป่วย", "AI แนะนำอุปกรณ์", "ตรวจสอบคลังอุปกรณ์"]
+  const isPreDelivery = PRE_DELIVERY_STATUSES.includes(currentStatus)
+  const isPrepare = currentStatus === "เตรียมจัดส่ง"
+  const needsDeliverPage = currentStatus === "อนุมัติ"
+  const needsLoanPage = currentStatus === "จัดส่งสำเร็จ"
   const needsReturnPage = currentStatus === "รอคืน"
+  const isReturned = currentStatus === "คืนอุปกรณ์"
 
-  // The assessment stage advances via the dedicated assess form (which records the
-  // clinical finding + equipment), not the generic one-tap advance button.
-  const advanceStatuses = nextStatuses.filter(
-    (s) =>
-      s !== "อนุมัติ" &&
-      s !== "ไม่อนุมัติ" &&
-      s !== "คืนอุปกรณ์" &&
-      !(needsAssessPage && s === "AI แนะนำอุปกรณ์"),
-  )
+  type ForwardTarget = { type: "link"; href: string } | { type: "advance"; toStatus: string }
+  const NAV: Record<string, { label: string; forward: ForwardTarget }> = {
+    "รับคำร้อง": { label: "ประเมินผู้ป่วย", forward: { type: "advance", toStatus: "ประเมินผู้ป่วย" } },
+    "ประเมินผู้ป่วย": {
+      label: "ประเมินผู้ป่วยและสั่งใช้อุปกรณ์",
+      forward: { type: "link", href: `/requests/${requestId}/assess` },
+    },
+    "AI แนะนำอุปกรณ์": { label: "ตรวจสอบคลังอุปกรณ์", forward: { type: "advance", toStatus: "ตรวจสอบคลังอุปกรณ์" } },
+    "ตรวจสอบคลังอุปกรณ์": {
+      label: "ตรวจสอบและอนุมัติ / ไม่อนุมัติ",
+      forward: { type: "link", href: `/requests/${requestId}/approve` },
+    },
+    "เตรียมจัดส่ง": { label: "ยืนยันจัดส่งสำเร็จ", forward: { type: "advance", toStatus: "จัดส่งสำเร็จ" } },
+  }
+  const nav = NAV[currentStatus]
+
+  // Show the fulfillment tracker once the request has been approved.
+  const showTracker = [
+    "อนุมัติ",
+    "เตรียมจัดส่ง",
+    "จัดส่งสำเร็จ",
+    "รอคืน",
+    "คืนอุปกรณ์",
+    "ปิดรายการ",
+  ].includes(currentStatus) && request.approvalDecision === "อนุมัติ"
 
   return (
     <div>
@@ -102,6 +106,15 @@ export default async function RequestDetailPage({ params }: PageProps) {
             <WorkflowStatusStepper currentStatus={currentStatus} />
           </CardContent>
         </Card>
+
+        {/* Fulfillment tracker (delivery-app style) — shown after approval */}
+        {showTracker && (
+          <Card>
+            <CardContent className="pt-4">
+              <DeliveryTracker currentStatus={currentStatus} />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Patient info */}
         <Card>
@@ -227,50 +240,116 @@ export default async function RequestDetailPage({ params }: PageProps) {
           </Card>
         )}
 
-        {/* Status history */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">ประวัติสถานะคำร้อง</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>จากสถานะ</TableHead>
-                  <TableHead>ถึงสถานะ</TableHead>
-                  <TableHead>วันเวลา</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {request.statusHistory.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center text-gray-400 py-6">
-                      ยังไม่มีประวัติ
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  request.statusHistory.map((h) => (
-                    <TableRow key={h.id}>
-                      <TableCell>
-                        {h.fromStatus ? (
-                          <StatusBadge status={toThaiWorkflowStatus(h.fromStatus)} type="workflow" />
-                        ) : (
-                          <span className="text-xs text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={toThaiWorkflowStatus(h.toStatus)} type="workflow" />
-                      </TableCell>
-                      <TableCell className="text-xs text-gray-500">
-                        {formatThaiDateTime(h.changedAt)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+        {/* Approval / rejection outcome */}
+        {request.approvalDecision === "อนุมัติ" && request.approverName && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">การอนุมัติ</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Row label="ผลการพิจารณา" value={<span className="text-green-600 font-medium">อนุมัติ</span>} />
+              <Row label="ชื่อผู้อนุมัติ" value={request.approverName} />
+            </CardContent>
+          </Card>
+        )}
+        {request.approvalDecision === "ไม่อนุมัติ" && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">การไม่อนุมัติ</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Row label="ผลการพิจารณา" value={<span className="text-red-600 font-medium">ไม่อนุมัติ</span>} />
+              <Row label="สาเหตุ" value={request.rejectionReason ?? "-"} />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Delivery plan (recorded at the "เตรียมจัดส่ง" stage) */}
+        {(request.delivererName || request.deliveryDate) && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">ข้อมูลการจัดส่ง</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {request.deliveryDate && (
+                <Row label="วันที่จัดส่ง" value={formatThaiDate(request.deliveryDate)} />
+              )}
+              {request.dueOrReturnDate && (
+                <Row label="กำหนดคืนอุปกรณ์" value={formatThaiDate(request.dueOrReturnDate)} />
+              )}
+              {request.delivererName && (
+                <Row label="ชื่อผู้จัดส่ง" value={request.delivererName} />
+              )}
+              {request.requestDetail && (
+                <Row label="รายละเอียดคำร้อง" value={request.requestDetail} />
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Delivery-success confirmation (shown at the "จัดส่งสำเร็จ" stage) */}
+        {currentStatus === "จัดส่งสำเร็จ" && (
+          <Card className="border-teal-200 bg-teal-50/60">
+            <CardContent className="pt-4">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="w-6 h-6 text-teal-600 shrink-0" />
+                <div className="space-y-0.5">
+                  <p className="text-base font-bold text-teal-700">จัดส่งอุปกรณ์สำเร็จแล้ว</p>
+                  <p className="text-sm text-gray-700">
+                    {request.assignedEquipmentItem
+                      ? `${toThaiEquipmentType(request.assignedEquipmentItem.equipmentType)} (${request.assignedEquipmentItem.assetNumber})`
+                      : "ส่งมอบอุปกรณ์ให้ผู้ป่วยเรียบร้อย"}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Active loan (recorded at the "รอคืน" stage) */}
+        {request.receivedDate && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">ข้อมูลการยืม</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Row label="วันที่รับอุปกรณ์" value={formatThaiDate(request.receivedDate)} />
+              {request.loanDetail && (
+                <Row label="รายละเอียดการยืม" value={request.loanDetail} />
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Return details (recorded at the "คืนอุปกรณ์" stage) */}
+        {request.returnRecord && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">ข้อมูลการคืนอุปกรณ์</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Row label="วันที่รับคืน" value={formatThaiDate(request.returnRecord.returnDate)} />
+              <Row label="ผู้รับคืน" value={request.returnRecord.receivingStaffName} />
+              <Row
+                label="สภาพอุปกรณ์"
+                value={
+                  <span
+                    className={
+                      request.returnRecord.condition === "ชำรุด"
+                        ? "text-red-600 font-medium"
+                        : "text-green-600 font-medium"
+                    }
+                  >
+                    {request.returnRecord.condition}
+                  </span>
+                }
+              />
+              {request.returnRecord.damageNote && (
+                <Row label="หมายเหตุความเสียหาย" value={request.returnRecord.damageNote} />
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Next action buttons */}
         {!isTerminal && (
@@ -279,43 +358,53 @@ export default async function RequestDetailPage({ params }: PageProps) {
               <CardTitle className="text-base">การดำเนินการถัดไป</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {/* Assessment stage → link to the assessment form */}
-              {needsAssessPage && (
-                <Link href={`/requests/${requestId}/assess`} className="block">
-                  <Button className="w-full">ประเมินผู้ป่วยและสั่งใช้อุปกรณ์</Button>
+              {/* Pre-delivery stages → ← revert / → next arrows (image1) */}
+              {isPreDelivery && nav && (
+                <NextActionNav
+                  requestId={requestId}
+                  forwardLabel={nav.label}
+                  forward={nav.forward}
+                  showBack
+                  backEnabled={currentStatus !== "รับคำร้อง"}
+                />
+              )}
+
+              {/* เตรียมจัดส่ง → single forward arrow (image2) */}
+              {isPrepare && nav && (
+                <NextActionNav
+                  requestId={requestId}
+                  forwardLabel={nav.label}
+                  forward={nav.forward}
+                  showBack={false}
+                  backEnabled={false}
+                />
+              )}
+
+              {/* Approved → link to prepare-delivery form */}
+              {needsDeliverPage && (
+                <Link href={`/requests/${requestId}/deliver`} className="block">
+                  <Button className="w-full">เตรียมจัดส่งอุปกรณ์</Button>
                 </Link>
               )}
 
-              {/* Approval stage → link to approve page */}
-              {needsApprovalPage && approveStatuses.length > 0 && (
-                <Link href={`/requests/${requestId}/approve`} className="block">
-                  <Button className="w-full">ตรวจสอบและอนุมัติ / ไม่อนุมัติ</Button>
+              {/* Delivered → link to loan / waiting-return form */}
+              {needsLoanPage && (
+                <Link href={`/requests/${requestId}/loan`} className="block">
+                  <Button className="w-full">เริ่มการยืม (รอคืน)</Button>
                 </Link>
               )}
 
               {/* Return stage → link to return page */}
-              {needsReturnPage && returnStatuses.length > 0 && (
+              {needsReturnPage && (
                 <Link href={`/requests/${requestId}/return`} className="block">
                   <Button className="w-full">บันทึกการรับคืนอุปกรณ์</Button>
                 </Link>
               )}
 
-              {/* Other transitions → inline confirm */}
-              {advanceStatuses.length > 0 && (
-                <WorkflowActions requestId={requestId} nextStatuses={advanceStatuses} />
+              {/* Returned → one-tap advance to close the request */}
+              {isReturned && (
+                <WorkflowActions requestId={requestId} nextStatuses={["ปิดรายการ"]} />
               )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Admin status override — set any status, bypassing ordered rules */}
-        {isAdmin && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">เปลี่ยนสถานะ (แอดมิน)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <StatusOverride requestId={requestId} currentStatus={currentStatus} />
             </CardContent>
           </Card>
         )}

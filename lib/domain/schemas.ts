@@ -11,6 +11,7 @@ import {
   LINE_NOTIFICATION_DELIVERY_STATUSES,
   LINE_NOTIFICATION_TRIGGERS,
   MEDIA_ASSET_KINDS,
+  REJECTION_REASONS,
   RETURN_CONDITIONS,
   SELF_CARE_ABILITIES,
   URGENCY_LEVELS,
@@ -96,8 +97,8 @@ export const patientSchema = z.object({
   reporterName: optionalTextSchema,
   address: addressSchema,
   location: locationSchema,
-  patientPhotos: z.array(mediaAssetSchema).default([]),
-  homeEnvironmentPhotos: z.array(mediaAssetSchema).default([]),
+  patientPhotos: z.array(mediaAssetSchema).min(1).max(5),
+  homeEnvironmentPhotos: z.array(mediaAssetSchema).min(1).max(5),
   medicalAssessment: medicalAssessmentSchema,
 });
 
@@ -107,7 +108,8 @@ export const urgencyLevelSchema = z.enum(URGENCY_LEVELS);
 // preliminary finding, and prescribe one or more equipment types with quantities.
 export const prescribedEquipmentItemSchema = z.object({
   equipmentType: z.enum(EQUIPMENT_TYPES),
-  quantity: z.coerce.number().int().min(1).max(99),
+  // Each prescribed equipment is a single unit; quantity is always 1.
+  quantity: z.coerce.number().int().min(1).max(1),
 });
 
 export const assessmentFormSchema = z.object({
@@ -116,7 +118,7 @@ export const assessmentFormSchema = z.object({
   patientCondition: z.string().trim().min(1),
   urgencyLevel: urgencyLevelSchema,
   assessmentSummary: z.string().trim().min(1),
-  prescribedEquipment: z.array(prescribedEquipmentItemSchema).min(1),
+  prescribedEquipment: z.array(prescribedEquipmentItemSchema).min(1).max(3),
   usageRecommendation: z.union([z.string().trim().min(1), z.literal("")]).optional(),
   equipmentNote: z.union([z.string().trim().min(1), z.literal("")]).optional(),
 });
@@ -127,6 +129,34 @@ export const borrowWorkflowStatusSchema = z.enum(BORROW_WORKFLOW_STATUSES);
 export const borrowApprovalDecisionSchema = z.enum(BORROW_APPROVAL_DECISIONS);
 export const deliveryStatusSchema = z.enum(DELIVERY_STATUSES);
 export const returnConditionSchema = z.enum(RETURN_CONDITIONS);
+export const rejectionReasonSchema = z.enum(REJECTION_REASONS);
+
+// Approval decision ("ตรวจสอบคลังอุปกรณ์" stage): staff bind a serialized item and
+// record who approved. Rejection instead records a reason from a fixed list.
+export const approveRequestSchema = z.object({
+  equipmentItemId: z.string().trim().min(1),
+  approverName: z.string().trim().min(1),
+});
+
+export const rejectRequestSchema = z.object({
+  rejectionReason: rejectionReasonSchema,
+});
+
+// "เตรียมจัดส่ง" stage: staff record the delivery plan for the approved item.
+export const prepareDeliverySchema = z.object({
+  requestDetail: z.union([z.string().trim().min(1), z.literal("")]).optional(),
+  deliveryDate: z.coerce.date(),
+  dueDate: z.coerce.date(),
+  delivererName: z.string().trim().min(1),
+});
+
+// "รอคืน" stage: staff record the active loan details after delivery is confirmed.
+export const startReturnWaitingSchema = z.object({
+  receivedDate: z.coerce.date(),
+  receiverName: z.string().trim().min(1),
+  delivererName: z.string().trim().min(1),
+  loanDetail: z.union([z.string().trim().min(1), z.literal("")]).optional(),
+});
 
 export const equipmentStatusHistoryEntrySchema = z.object({
   equipmentItemId: z.string().trim().min(1),
@@ -198,7 +228,7 @@ export const returnDataSchema = z
   .object({
     returnDate: z.coerce.date(),
     receivingStaffName: z.string().trim().min(1),
-    equipmentPhoto: mediaAssetSchema,
+    equipmentPhotos: z.array(mediaAssetSchema).min(1).max(3),
     condition: returnConditionSchema,
     damageNote: z.string().trim().min(1).optional(),
   })
@@ -288,5 +318,10 @@ export type AIRecommendationResult = z.infer<typeof aiRecommendationResultSchema
 export type LineContactChannel = z.infer<typeof lineContactChannelSchema>;
 export type LineNotification = z.infer<typeof lineNotificationSchema>;
 export type ReturnData = z.infer<typeof returnDataSchema>;
+export type RejectionReason = z.infer<typeof rejectionReasonSchema>;
+export type ApproveRequestInput = z.infer<typeof approveRequestSchema>;
+export type RejectRequestInput = z.infer<typeof rejectRequestSchema>;
+export type PrepareDeliveryInput = z.infer<typeof prepareDeliverySchema>;
+export type StartReturnWaitingInput = z.infer<typeof startReturnWaitingSchema>;
 export type BorrowingRequest = z.infer<typeof borrowingRequestSchema>;
 export type PatientLocationSummary = z.infer<typeof patientLocationSummarySchema>;
