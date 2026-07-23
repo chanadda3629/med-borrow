@@ -1,4 +1,5 @@
 "use server"
+import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { rejectRequestSchema } from "@/lib/domain/schemas"
@@ -28,6 +29,8 @@ export async function rejectRequest(
         data: { requestId, fromStatus: toThaiWorkflowStatus(request.workflowStatus), toStatus: "ไม่อนุมัติ" },
       }),
     ])
+    revalidatePath(`/requests/${requestId}`)
+    revalidatePath("/requests")
     fireAndForgetLineNotification(requestId, "rejected")
     return ok(undefined)
   } catch (e) {

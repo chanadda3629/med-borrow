@@ -1,4 +1,5 @@
 "use server"
+import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { canTransitionBorrowWorkflowStatus } from "@/lib/domain/transitions"
@@ -6,12 +7,13 @@ import { borrowWorkflowStatusSchema } from "@/lib/domain/schemas"
 import { toThaiWorkflowStatus } from "@/lib/domain/labels"
 import { fireAndForgetLineNotification } from "@/lib/integrations/line/fire-and-forget"
 
-type LineNotificationTrigger = "preparing-delivery" | "delivery-completed" | "returned"
+type LineNotificationTrigger = "delivery-completed"
 
+// Only delivery-completed pushes on a workflow advance — it's actionable (device
+// arriving today). preparing-delivery and returned are pull-only (patient taps
+// เช็คสถานะ) to conserve the free-tier push quota. See line-messaging-design.
 const TRIGGER_MAP: Record<string, LineNotificationTrigger> = {
-  "เตรียมจัดส่ง": "preparing-delivery",
   "จัดส่งสำเร็จ": "delivery-completed",
-  "คืนอุปกรณ์": "returned",
 }
 
 export async function advanceWorkflow(requestId: string, toStatus: string) {
@@ -35,6 +37,8 @@ export async function advanceWorkflow(requestId: string, toStatus: string) {
       }),
     ])
 
+    revalidatePath(`/requests/${requestId}`)
+    revalidatePath("/requests")
     const trigger = TRIGGER_MAP[parsed.data]
     if (trigger) fireAndForgetLineNotification(requestId, trigger)
     return ok(undefined)

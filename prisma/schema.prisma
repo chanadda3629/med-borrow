@@ -136,6 +136,7 @@ model BorrowingRequest {
   requestDetail            String?
   deliveryDate             DateTime?
   delivererName            String?
+  deliveryContactPhone     String?                         @db.VarChar(10)
   loanDetail               String?
   receivedDate             DateTime?
   receiverName             String?

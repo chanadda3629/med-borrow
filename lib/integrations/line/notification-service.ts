@@ -10,6 +10,7 @@ type TemplateContext = {
   name: string
   equipmentType: string
   dueOrReturnDate: Date | null
+  deliveryContactPhone: string | null
 }
 
 function daysRemaining(date: Date): number {
@@ -28,11 +29,13 @@ const TEMPLATES: Record<Trigger, (ctx: TemplateContext) => string> = {
     dueOrReturnDate
       ? `กำลังเตรียมจัดส่ง${equipmentType}ให้คุณ ${name} คาดว่าจะจัดส่งเสร็จภายใน ${daysRemaining(dueOrReturnDate)} วัน`
       : `กำลังเตรียมจัดส่ง${equipmentType}ให้คุณ ${name}`,
-  "delivery-completed": ({ name, equipmentType }) => `จัดส่ง${equipmentType}ให้คุณ ${name} สำเร็จแล้ว`,
+  "delivery-completed": ({ name, equipmentType, deliveryContactPhone }) =>
+    `จัดส่ง${equipmentType}ให้คุณ ${name} สำเร็จแล้ว` +
+    (deliveryContactPhone ? `\nหากมีข้อสงสัย ติดต่อได้ที่ ${deliveryContactPhone}` : ""),
   "return-due-soon": ({ name, equipmentType, dueOrReturnDate }) =>
     dueOrReturnDate
-      ? `แจ้งเตือน: กำหนดคืน${equipmentType}ของท่านคือวันที่ ${formatThaiDate(dueOrReturnDate)} (อีก ${daysRemaining(dueOrReturnDate)} วัน)`
-      : `อุปกรณ์ของ ${name} ใกล้ถึงกำหนดคืน`,
+      ? `แจ้งเตือน: กำหนดคืน${equipmentType}ของ ${name} คือวันที่ ${formatThaiDate(dueOrReturnDate)} (อีก ${daysRemaining(dueOrReturnDate)} วัน)`
+      : `${equipmentType}ของ ${name} ใกล้ถึงกำหนดคืน`,
   "returned": ({ name, equipmentType }) => `รับคืน${equipmentType}ของ ${name} เรียบร้อยแล้ว`,
 }
 
@@ -50,6 +53,7 @@ export async function sendLineNotification(requestId: string, trigger: Trigger):
     name: request.patient.fullName,
     equipmentType: request.assignedEquipmentItem?.equipmentType ?? request.requestedEquipmentType,
     dueOrReturnDate: request.dueOrReturnDate,
+    deliveryContactPhone: request.deliveryContactPhone,
   })
   const channelValue = request.patient.lineUserId
   const triggeredAt = new Date()

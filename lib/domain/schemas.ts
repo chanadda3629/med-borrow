@@ -143,11 +143,14 @@ export const rejectRequestSchema = z.object({
 });
 
 // "เตรียมจัดส่ง" stage: staff record the delivery plan for the approved item.
+// deliveryContactPhone is the number the patient/family can call on delivery day;
+// it rides into the delivery-completed LINE notification.
 export const prepareDeliverySchema = z.object({
   requestDetail: z.union([z.string().trim().min(1), z.literal("")]).optional(),
   deliveryDate: z.coerce.date(),
   dueDate: z.coerce.date(),
   delivererName: z.string().trim().min(1),
+  deliveryContactPhone: thaiMobilePhoneSchema,
 });
 
 // "รอคืน" stage: staff record the active loan details after delivery is confirmed.

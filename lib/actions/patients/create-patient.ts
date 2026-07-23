@@ -1,7 +1,7 @@
 "use server"
+import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
-import { fireAndForgetLineNotification } from "@/lib/integrations/line/fire-and-forget"
 
 // Intake ("รับคำร้อง") captures the patient, address and photos only. The medical
 // assessment, AI recommendation and equipment selection now happen later on the
@@ -105,7 +105,9 @@ export async function createPatient(input: CreatePatientInput) {
       })
       return request
     })
-    fireAndForgetLineNotification(result.id, "request-submitted")
+    revalidatePath("/requests")
+    // request-submitted is pull-only now (patient taps เช็คสถานะ) to conserve the
+    // free-tier push quota — no push fired at intake. See line-messaging-design.
     return ok({ requestId: result.id })
   } catch (e) {
     return err(e instanceof Error ? e.message : "ไม่สามารถบันทึกข้อมูลได้")

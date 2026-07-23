@@ -127,8 +127,10 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
       setError(result.error)
       setSubmitting(false)
     } else {
+      // The server action revalidates the detail route, so a plain push lands on
+      // fresh data. Do NOT also call router.refresh() here — firing it right after
+      // push cancels the pending navigation and strands the user on this page.
       router.push(`/requests/${requestId}`)
-      router.refresh()
     }
   }
 

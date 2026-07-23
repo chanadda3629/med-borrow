@@ -1,4 +1,5 @@
 "use server"
+import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { canTransitionBorrowWorkflowStatus } from "@/lib/domain/transitions"
@@ -47,6 +48,8 @@ export async function startReturnWaiting(requestId: string, input: StartReturnWa
       }),
     ])
 
+    revalidatePath(`/requests/${requestId}`)
+    revalidatePath("/requests")
     return ok(undefined)
   } catch (e) {
     return err(e instanceof Error ? e.message : "เกิดข้อผิดพลาด")

@@ -22,6 +22,7 @@ export function PrepareDeliveryForm({ requestId }: PrepareDeliveryFormProps) {
   const [deliveryDate, setDeliveryDate] = useState(today)
   const [dueDate, setDueDate] = useState("")
   const [delivererName, setDelivererName] = useState("")
+  const [deliveryContactPhone, setDeliveryContactPhone] = useState("")
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -30,6 +31,10 @@ export function PrepareDeliveryForm({ requestId }: PrepareDeliveryFormProps) {
     if (!deliveryDate) { setError("กรุณาเลือกวันที่จัดส่ง"); return }
     if (!dueDate) { setError("กรุณาเลือกกำหนดคืนอุปกรณ์"); return }
     if (!delivererName.trim()) { setError("กรุณากรอกชื่อผู้จัดส่ง"); return }
+    if (!/^0(?:6|8|9)\d{8}$/.test(deliveryContactPhone.trim())) {
+      setError("กรุณากรอกเบอร์โทรติดต่อวันจัดส่งให้ถูกต้อง (10 หลัก)")
+      return
+    }
 
     setLoading(true)
     try {
@@ -38,6 +43,7 @@ export function PrepareDeliveryForm({ requestId }: PrepareDeliveryFormProps) {
         deliveryDate,
         dueDate,
         delivererName: delivererName.trim(),
+        deliveryContactPhone: deliveryContactPhone.trim(),
       })
       if (!result.success) {
         setError(result.error)
@@ -95,6 +101,22 @@ export function PrepareDeliveryForm({ requestId }: PrepareDeliveryFormProps) {
           value={delivererName}
           onChange={(e) => setDelivererName(e.target.value)}
           placeholder="กรอกชื่อ-สกุลผู้จัดส่ง"
+          disabled={loading}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="deliveryContactPhone">
+          เบอร์โทรติดต่อวันจัดส่ง <span className="text-red-500">*</span>
+        </Label>
+        <Input
+          id="deliveryContactPhone"
+          type="tel"
+          inputMode="numeric"
+          maxLength={10}
+          value={deliveryContactPhone}
+          onChange={(e) => setDeliveryContactPhone(e.target.value.replace(/\D/g, ""))}
+          placeholder="เบอร์ที่ผู้ป่วย/ญาติโทรติดต่อได้ในวันจัดส่ง"
           disabled={loading}
         />
       </div>

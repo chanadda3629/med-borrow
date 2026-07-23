@@ -1,4 +1,5 @@
 "use server"
+import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { toThaiWorkflowStatus } from "@/lib/domain/labels"
@@ -34,6 +35,8 @@ export async function revertWorkflow(requestId: string) {
       }),
     ])
 
+    revalidatePath(`/requests/${requestId}`)
+    revalidatePath("/requests")
     return ok(undefined)
   } catch (e) {
     return err(e instanceof Error ? e.message : "เกิดข้อผิดพลาด")

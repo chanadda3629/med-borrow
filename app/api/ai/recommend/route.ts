@@ -17,7 +17,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 })
   }
 
-  // The AI call itself — failures here are 500.
+  // The AI call is decision support only — staff can always pick equipment
+  // manually. If it fails for any reason (missing key, OpenRouter outage, bad
+  // JSON, schema mismatch), degrade gracefully to a manual-selection state with
+  // a 200 rather than blocking the workflow with a 500.
   try {
     const result = await getAIRecommendation({
       age: data.age, gender: data.gender, chronicDiseases: data.chronicDiseases,
@@ -25,11 +28,15 @@ export async function POST(request: NextRequest) {
       patientCondition: data.patientCondition, walkingAbility: data.walkingAbility,
       selfCareAbility: data.selfCareAbility,
     })
-    return NextResponse.json(result)
+    return NextResponse.json({ ...result, fallback: false })
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "ไม่สามารถรับคำแนะนำได้" },
-      { status: 500 }
-    )
+    // Log the detail server-side for ops; never surface raw provider errors to
+    // the client (they can echo request payloads) or log patient PII.
+    console.error("AI recommendation unavailable:", err instanceof Error ? err.message : err)
+    return NextResponse.json({
+      recommendations: [],
+      fallback: true,
+      message: "ระบบ AI ไม่พร้อมใช้งานขณะนี้ กรุณาเลือกอุปกรณ์เอง",
+    })
   }
 }

@@ -1,9 +1,9 @@
 "use server"
+import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { returnDataSchema } from "@/lib/domain/schemas"
 import { toThaiWorkflowStatus } from "@/lib/domain/labels"
-import { fireAndForgetLineNotification } from "@/lib/integrations/line/fire-and-forget"
 
 interface ReturnPhotoInput {
   url: string
@@ -93,7 +93,12 @@ export async function processReturn(input: ReturnInput) {
         },
       }),
     ])
-    fireAndForgetLineNotification(input.requestId, "returned")
+    revalidatePath(`/requests/${input.requestId}`)
+    revalidatePath("/requests")
+    revalidatePath(`/inventory/${request.assignedEquipmentItemId}`)
+    revalidatePath("/inventory")
+    // returned is pull-only now (receipt available on demand via เช็คสถานะ) — no
+    // push, to conserve the free-tier quota. See line-messaging-design.
     return ok(undefined)
   } catch (e) {
     return err(e instanceof Error ? e.message : "เกิดข้อผิดพลาด")

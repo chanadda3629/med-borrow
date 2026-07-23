@@ -1,4 +1,5 @@
 "use server"
+import { revalidatePath } from "next/cache"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { canAssignEquipmentItem } from "@/lib/domain/transitions"
@@ -49,6 +50,10 @@ export async function approveRequest(
         data: { equipmentItemId, fromStatus: itemStatus, toStatus: "ถูกยืม" },
       }),
     ])
+    revalidatePath(`/requests/${requestId}`)
+    revalidatePath("/requests")
+    revalidatePath(`/inventory/${equipmentItemId}`)
+    revalidatePath("/inventory")
     fireAndForgetLineNotification(requestId, "approved")
     return ok(undefined)
   } catch (e) {
