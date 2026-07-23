@@ -107,7 +107,7 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
 
         {open && (
           <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center animate-[overlay-in_0.15s_ease-out]"
+            className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 sm:items-center animate-[overlay-in_0.15s_ease-out]"
             onClick={(e) => {
               if (e.target === e.currentTarget) handleClose()
             }}

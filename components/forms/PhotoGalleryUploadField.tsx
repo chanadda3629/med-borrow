@@ -90,7 +90,6 @@ export function PhotoGalleryUploadField({
         ref={inputRef}
         type="file"
         accept="image/*"
-        capture="environment"
         className="hidden"
         onChange={(e) => void handleFile(e)}
       />

@@ -301,7 +301,7 @@ export function DatePicker({
 
       {open && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 sm:items-center"
           onClick={(e) => {
             if (e.target === e.currentTarget) handleClose()
           }}
