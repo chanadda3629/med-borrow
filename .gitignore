@@ -46,3 +46,6 @@ bash.exe.stackdump
 
 # local agent state
 /.claude/
+
+# database backups (contain patient PII — never commit)
+/backups/
