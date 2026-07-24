@@ -511,8 +511,8 @@ const borrowingRequestData = [
     requestedEquipmentType: "wheelchair",
     aiRecommendationResult: {
       recommendations: [
-        { equipmentType: "wheelchair", score: 95, reason: "ผู้ป่วยไม่สามารถเดินได้ รถเข็นเป็นอุปกรณ์ที่เหมาะสมที่สุด", rank: 1 },
-        { equipmentType: "bed", score: 60, reason: "อาจต้องการเตียงผู้ป่วยเสริมในอนาคต", rank: 2 },
+        { equipmentType: "รถเข็น", matchingScorePercentage: 95, explanation: "ผู้ป่วยไม่สามารถเดินได้ รถเข็นเป็นอุปกรณ์ที่เหมาะสมที่สุด", rankingOrder: 1 },
+        { equipmentType: "เตียงผู้ป่วย", matchingScorePercentage: 60, explanation: "อาจต้องการเตียงผู้ป่วยเสริมในอนาคต", rankingOrder: 2 },
       ],
       summary: "แนะนำรถเข็นเป็นอุปกรณ์หลักสำหรับผู้ป่วยรายนี้",
     },
@@ -531,8 +531,8 @@ const borrowingRequestData = [
     requestedEquipmentType: "walker",
     aiRecommendationResult: {
       recommendations: [
-        { equipmentType: "walker", score: 88, reason: "ผู้ป่วยโรคหลอดเลือดสมองที่ขาอ่อนแรง Walker ช่วยพยุงได้ดี", rank: 1 },
-        { equipmentType: "cane", score: 45, reason: "ไม้เท้าอาจไม่เพียงพอสำหรับระดับอาการปัจจุบัน", rank: 2 },
+        { equipmentType: "Walker", matchingScorePercentage: 88, explanation: "ผู้ป่วยโรคหลอดเลือดสมองที่ขาอ่อนแรง Walker ช่วยพยุงได้ดี", rankingOrder: 1 },
+        { equipmentType: "ไม้เท้า", matchingScorePercentage: 45, explanation: "ไม้เท้าอาจไม่เพียงพอสำหรับระดับอาการปัจจุบัน", rankingOrder: 2 },
       ],
       summary: "แนะนำ Walker เพื่อช่วยพยุงการเดิน",
     },
@@ -551,8 +551,8 @@ const borrowingRequestData = [
     requestedEquipmentType: "bed",
     aiRecommendationResult: {
       recommendations: [
-        { equipmentType: "bed", score: 98, reason: "ผู้ป่วยติดเตียงต้องการเตียงผู้ป่วยปรับระดับได้", rank: 1 },
-        { equipmentType: "air_mattress", score: 85, reason: "ควรใช้ร่วมกับที่นอนลมเพื่อป้องกันแผลกดทับ", rank: 2 },
+        { equipmentType: "เตียงผู้ป่วย", matchingScorePercentage: 98, explanation: "ผู้ป่วยติดเตียงต้องการเตียงผู้ป่วยปรับระดับได้", rankingOrder: 1 },
+        { equipmentType: "ที่นอนลม", matchingScorePercentage: 85, explanation: "ควรใช้ร่วมกับที่นอนลมเพื่อป้องกันแผลกดทับ", rankingOrder: 2 },
       ],
       summary: "แนะนำเตียงผู้ป่วยเป็นความต้องการเร่งด่วน",
     },
@@ -571,8 +571,8 @@ const borrowingRequestData = [
     requestedEquipmentType: "wheelchair",
     aiRecommendationResult: {
       recommendations: [
-        { equipmentType: "wheelchair", score: 92, reason: "ผู้ป่วยถุงลมโป่งพองต้องการรถเข็นเพื่อลดการใช้พลังงาน", rank: 1 },
-        { equipmentType: "oxygen_tank", score: 90, reason: "ถังออกซิเจนสำคัญมากสำหรับผู้ป่วยที่มีปัญหาการหายใจ", rank: 2 },
+        { equipmentType: "รถเข็น", matchingScorePercentage: 92, explanation: "ผู้ป่วยถุงลมโป่งพองต้องการรถเข็นเพื่อลดการใช้พลังงาน", rankingOrder: 1 },
+        { equipmentType: "ถังออกซิเจน", matchingScorePercentage: 90, explanation: "ถังออกซิเจนสำคัญมากสำหรับผู้ป่วยที่มีปัญหาการหายใจ", rankingOrder: 2 },
       ],
       summary: "แนะนำรถเข็นและอาจต้องพิจารณาถังออกซิเจนเพิ่มเติม",
     },
@@ -591,8 +591,8 @@ const borrowingRequestData = [
     requestedEquipmentType: "air_mattress",
     aiRecommendationResult: {
       recommendations: [
-        { equipmentType: "air_mattress", score: 97, reason: "ผู้ป่วยมีแผลกดทับ ที่นอนลมจำเป็นมากเพื่อลดแรงกด", rank: 1 },
-        { equipmentType: "bed", score: 75, reason: "เตียงผู้ป่วยช่วยให้ดูแลได้ง่ายขึ้น", rank: 2 },
+        { equipmentType: "ที่นอนลม", matchingScorePercentage: 97, explanation: "ผู้ป่วยมีแผลกดทับ ที่นอนลมจำเป็นมากเพื่อลดแรงกด", rankingOrder: 1 },
+        { equipmentType: "เตียงผู้ป่วย", matchingScorePercentage: 75, explanation: "เตียงผู้ป่วยช่วยให้ดูแลได้ง่ายขึ้น", rankingOrder: 2 },
       ],
       summary: "ที่นอนลมเป็นความต้องการเร่งด่วนเพื่อป้องกันแผลกดทับ",
     },
@@ -611,8 +611,8 @@ const borrowingRequestData = [
     requestedEquipmentType: "walker",
     aiRecommendationResult: {
       recommendations: [
-        { equipmentType: "walker", score: 85, reason: "ผู้ป่วยหลังผ่าตัดเข่าต้องการ Walker ในการฟื้นฟู", rank: 1 },
-        { equipmentType: "cane", score: 50, reason: "ไม้เท้าอาจพิจารณาใช้ได้เมื่ออาการดีขึ้น", rank: 2 },
+        { equipmentType: "Walker", matchingScorePercentage: 85, explanation: "ผู้ป่วยหลังผ่าตัดเข่าต้องการ Walker ในการฟื้นฟู", rankingOrder: 1 },
+        { equipmentType: "ไม้เท้า", matchingScorePercentage: 50, explanation: "ไม้เท้าอาจพิจารณาใช้ได้เมื่ออาการดีขึ้น", rankingOrder: 2 },
       ],
       summary: "แนะนำ Walker สำหรับการฟื้นฟูหลังผ่าตัด",
     },
@@ -631,8 +631,8 @@ const borrowingRequestData = [
     requestedEquipmentType: "air_mattress",
     aiRecommendationResult: {
       recommendations: [
-        { equipmentType: "air_mattress", score: 96, reason: "ผู้ป่วยติดเตียงโรคหัวใจ ที่นอนลมจำเป็นเพื่อป้องกันแผลกดทับ", rank: 1 },
-        { equipmentType: "overbed_table", score: 60, reason: "โต๊ะคร่อมเตียงอำนวยความสะดวกในการรับประทานอาหาร", rank: 2 },
+        { equipmentType: "ที่นอนลม", matchingScorePercentage: 96, explanation: "ผู้ป่วยติดเตียงโรคหัวใจ ที่นอนลมจำเป็นเพื่อป้องกันแผลกดทับ", rankingOrder: 1 },
+        { equipmentType: "โต๊ะคร่อมเตียง", matchingScorePercentage: 60, explanation: "โต๊ะคร่อมเตียงอำนวยความสะดวกในการรับประทานอาหาร", rankingOrder: 2 },
       ],
       summary: "แนะนำที่นอนลมเป็นลำดับแรก",
     },

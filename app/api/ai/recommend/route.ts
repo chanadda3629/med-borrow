@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/auth"
 import { getAIRecommendation } from "@/lib/integrations/openrouter/recommendation"
 import { medicalAssessmentSchema } from "@/lib/domain/schemas"
 import { z } from "zod"
@@ -6,6 +7,13 @@ import { z } from "zod"
 const bodySchema = medicalAssessmentSchema.extend({ gender: z.string().min(1) })
 
 export async function POST(request: NextRequest) {
+  // Staff-only: this endpoint burns the OpenRouter quota, so an unauthenticated
+  // caller must never reach the provider.
+  const session = await auth()
+  if (!session?.user) {
+    return NextResponse.json({ error: "ไม่ได้รับอนุญาต" }, { status: 401 })
+  }
+
   // Validate first — a bad request body is a 400, not a 500.
   let data: z.infer<typeof bodySchema>
   try {

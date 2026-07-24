@@ -76,7 +76,10 @@ export default async function RequestDetailPage({ params }: PageProps) {
       label: "ประเมินผู้ป่วยและสั่งใช้อุปกรณ์",
       forward: { type: "link", href: `/requests/${requestId}/assess` },
     },
-    "AI แนะนำอุปกรณ์": { label: "ตรวจสอบคลังอุปกรณ์", forward: { type: "advance", toStatus: "ตรวจสอบคลังอุปกรณ์" } },
+    "AI แนะนำอุปกรณ์": {
+      label: "ดูคำแนะนำอุปกรณ์จาก AI",
+      forward: { type: "link", href: `/requests/${requestId}/ai` },
+    },
     "ตรวจสอบคลังอุปกรณ์": {
       label: "ตรวจสอบและอนุมัติ / ไม่อนุมัติ",
       forward: { type: "link", href: `/requests/${requestId}/approve` },

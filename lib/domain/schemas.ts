@@ -213,6 +213,15 @@ export const aiRecommendationResultSchema = z.object({
   staffOverrideNote: z.string().trim().min(1).optional(),
 });
 
+// "AI แนะนำอุปกรณ์" stage: staff confirm (or override) the AI recommendation.
+// The AI result is optional — when the provider was unavailable the staff decision
+// is still recorded and the workflow still advances (AI is decision support only).
+export const confirmRecommendationSchema = z.object({
+  aiRecommendationResult: aiRecommendationResultSchema.optional(),
+  staffDecisionEquipmentType: equipmentTypeSchema,
+  staffOverrideNote: optionalTextSchema,
+});
+
 export const lineContactChannelSchema = z.object({
   type: z.enum(CONTACT_CHANNEL_TYPES),
   value: z.string().trim().min(1),
@@ -318,6 +327,7 @@ export type ReturnConditionHistoryEntry = z.infer<
 export type EquipmentItem = z.infer<typeof equipmentItemSchema>;
 export type AIRecommendation = z.infer<typeof aiRecommendationSchema>;
 export type AIRecommendationResult = z.infer<typeof aiRecommendationResultSchema>;
+export type ConfirmRecommendationInput = z.infer<typeof confirmRecommendationSchema>;
 export type LineContactChannel = z.infer<typeof lineContactChannelSchema>;
 export type LineNotification = z.infer<typeof lineNotificationSchema>;
 export type ReturnData = z.infer<typeof returnDataSchema>;
