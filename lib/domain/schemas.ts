@@ -209,16 +209,23 @@ export const aiRecommendationSchema = z.object({
 
 export const aiRecommendationResultSchema = z.object({
   recommendations: z.array(aiRecommendationSchema).min(1),
+  // Staff may confirm 1–5 equipment types. staffDecisionEquipmentType (singular)
+  // is kept for backward compatibility with results stored before multi-select.
+  staffDecisionEquipmentTypes: z.array(equipmentTypeSchema).min(1).max(5).optional(),
   staffDecisionEquipmentType: equipmentTypeSchema.optional(),
   staffOverrideNote: z.string().trim().min(1).optional(),
 });
 
 // "AI แนะนำอุปกรณ์" stage: staff confirm (or override) the AI recommendation.
-// The AI result is optional — when the provider was unavailable the staff decision
-// is still recorded and the workflow still advances (AI is decision support only).
+// Staff pick 1–5 equipment types. The AI result is optional — when the provider
+// was unavailable the staff decision is still recorded and the workflow still
+// advances (AI is decision support only).
 export const confirmRecommendationSchema = z.object({
   aiRecommendationResult: aiRecommendationResultSchema.optional(),
-  staffDecisionEquipmentType: equipmentTypeSchema,
+  staffDecisionEquipmentTypes: z
+    .array(equipmentTypeSchema)
+    .min(1, "กรุณาเลือกอุปกรณ์อย่างน้อย 1 รายการ")
+    .max(5, "เลือกอุปกรณ์ได้สูงสุด 5 รายการ"),
   staffOverrideNote: optionalTextSchema,
 });
 

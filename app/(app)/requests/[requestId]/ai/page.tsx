@@ -27,9 +27,10 @@ export default async function AIRecommendationPage({ params }: PageProps) {
 
   // The prescribed-equipment list seeds the manual fallback picker when the AI
   // is unavailable.
+  const assessment = request.patient.medicalAssessment
   const prescribed = z
     .array(prescribedEquipmentItemSchema)
-    .safeParse(request.patient.medicalAssessment?.prescribedEquipment ?? [])
+    .safeParse(assessment?.prescribedEquipment ?? [])
   const prescribedEquipment = prescribed.success
     ? prescribed.data.map((e) => e.equipmentType)
     : []
@@ -45,6 +46,8 @@ export default async function AIRecommendationPage({ params }: PageProps) {
         <RecommendationForm
           requestId={requestId}
           prescribedEquipment={prescribedEquipment}
+          patientCondition={assessment?.patientCondition ?? request.patient.patientCondition ?? ""}
+          assessmentSummary={assessment?.assessmentSummary ?? ""}
         />
       </div>
     </div>

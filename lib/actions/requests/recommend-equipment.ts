@@ -51,6 +51,7 @@ export async function fetchRecommendations(requestId: string) {
         patientCondition: assessment?.patientCondition ?? patient.patientCondition,
         urgencyLevel: assessment?.urgencyLevel ?? patient.urgencyLevel,
         checklistAnswers: assessment?.checklistAnswers ?? [],
+        assessmentSummary: assessment?.assessmentSummary ?? "",
       })
       return ok<RecommendationFetchResult>({
         recommendations: result.recommendations,
@@ -99,6 +100,9 @@ export async function confirmRecommendation(requestId: string, input: unknown) {
     }
 
     const overrideNote = data.staffOverrideNote?.trim() || undefined
+    // The request tracks one primary equipment type (single-item approval flow);
+    // the first selected type becomes it, the full 1–5 list is kept on the result.
+    const primaryEquipmentType = data.staffDecisionEquipmentTypes[0]
 
     // Store the full AI result merged with the staff decision, so the read-only
     // detail card can show both the ranking and what staff chose. Only written
@@ -107,7 +111,7 @@ export async function confirmRecommendation(requestId: string, input: unknown) {
     if (data.aiRecommendationResult) {
       storedResult = {
         ...data.aiRecommendationResult,
-        staffDecisionEquipmentType: data.staffDecisionEquipmentType,
+        staffDecisionEquipmentTypes: data.staffDecisionEquipmentTypes,
         ...(overrideNote ? { staffOverrideNote: overrideNote } : {}),
       } as unknown as Prisma.InputJsonValue
     }
@@ -117,7 +121,7 @@ export async function confirmRecommendation(requestId: string, input: unknown) {
         where: { id: requestId },
         data: {
           ...(storedResult ? { aiRecommendationResult: storedResult } : {}),
-          requestedEquipmentType: data.staffDecisionEquipmentType,
+          requestedEquipmentType: primaryEquipmentType,
           workflowStatus: "ตรวจสอบคลังอุปกรณ์",
         },
       }),

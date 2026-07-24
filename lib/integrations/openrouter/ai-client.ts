@@ -2,7 +2,7 @@ interface ChatMessage { role: "system" | "user" | "assistant"; content: string }
 
 export async function callOpenRouter(
   messages: ChatMessage[],
-  model = process.env.OPENROUTER_MODEL ?? "google/gemini-2.5-flash"
+  model = process.env.OPENROUTER_MODEL || "google/gemini-3.5-flash-lite"
 ): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error("OPENROUTER_API_KEY not set")
