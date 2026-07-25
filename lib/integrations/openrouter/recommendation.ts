@@ -11,6 +11,9 @@ export interface AssessmentPayload {
   patientCondition: string
   walkingAbility: string
   selfCareAbility: string
+  // Free-text initial symptom assessment from the "ประเมินผู้ป่วย" form. This is
+  // the primary signal the ranking should be based on.
+  assessmentSummary?: string
 }
 
 export async function getAIRecommendation(payload: AssessmentPayload) {
@@ -18,14 +21,15 @@ export async function getAIRecommendation(payload: AssessmentPayload) {
   const system = `คุณเป็นผู้เชี่ยวชาญด้านการดูแลผู้ป่วยแบบประคองกาย ให้คำแนะนำอุปกรณ์ที่เหมาะสม
 ตอบเป็น JSON: {"recommendations":[{"equipmentType":"...","matchingScorePercentage":95,"explanation":"...","rankingOrder":1}]}
 อุปกรณ์ที่มี: ${equipment}
-แนะนำเฉพาะจากรายการนี้ เรียงจากคะแนนสูงสุด`
+แนะนำเฉพาะจากรายการนี้ จัดอันดับความเหมาะสมโดยยึด "ผลการประเมินอาการเบื้องต้น" และอาการป่วยของผู้ป่วยเป็นหลัก เรียงจากคะแนนสูงสุด`
 
   const user = `ผู้ป่วยอายุ ${payload.age} ปี เพศ${payload.gender}
 โรคประจำตัว: ${payload.chronicDiseases.join(", ") || "ไม่มี"}
 ความสามารถเดิน: ${payload.walkingAbility}
 การดูแลตนเอง: ${payload.selfCareAbility}
-สภาพ: ${payload.patientCondition} ความเร่งด่วน: ${payload.urgencyLevel}
-ผลประเมิน: ${payload.checklistAnswers.join(", ")}`
+อาการป่วย: ${payload.patientCondition} ความเร่งด่วน: ${payload.urgencyLevel}
+ผลการประเมินอาการเบื้องต้น: ${payload.assessmentSummary?.trim() || "-"}
+รายการประเมิน: ${payload.checklistAnswers.join(", ") || "-"}`
 
   const raw = await callOpenRouter([{ role: "system", content: system }, { role: "user", content: user }])
   return aiRecommendationResultSchema.parse(JSON.parse(raw))

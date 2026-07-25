@@ -76,7 +76,10 @@ export default async function RequestDetailPage({ params }: PageProps) {
       label: "ประเมินผู้ป่วยและสั่งใช้อุปกรณ์",
       forward: { type: "link", href: `/requests/${requestId}/assess` },
     },
-    "AI แนะนำอุปกรณ์": { label: "ตรวจสอบคลังอุปกรณ์", forward: { type: "advance", toStatus: "ตรวจสอบคลังอุปกรณ์" } },
+    "AI แนะนำอุปกรณ์": {
+      label: "ดูคำแนะนำอุปกรณ์จาก AI",
+      forward: { type: "link", href: `/requests/${requestId}/ai` },
+    },
     "ตรวจสอบคลังอุปกรณ์": {
       label: "ตรวจสอบและอนุมัติ / ไม่อนุมัติ",
       forward: { type: "link", href: `/requests/${requestId}/approve` },
@@ -192,12 +195,21 @@ export default async function RequestDetailPage({ params }: PageProps) {
                   )}
                 </div>
               ))}
-              {aiResult.data.staffDecisionEquipmentType && (
-                <div className="text-sm text-gray-600 pt-1">
-                  <span className="font-medium">เจ้าหน้าที่เลือก: </span>
-                  {aiResult.data.staffDecisionEquipmentType}
-                </div>
-              )}
+              {(() => {
+                // Multi-select stores staffDecisionEquipmentTypes; fall back to the
+                // legacy singular field for results saved before multi-select.
+                const decided =
+                  aiResult.data.staffDecisionEquipmentTypes ??
+                  (aiResult.data.staffDecisionEquipmentType
+                    ? [aiResult.data.staffDecisionEquipmentType]
+                    : [])
+                return decided.length > 0 ? (
+                  <div className="text-sm text-gray-600 pt-1">
+                    <span className="font-medium">เจ้าหน้าที่เลือก: </span>
+                    {decided.join(", ")}
+                  </div>
+                ) : null
+              })()}
               {aiResult.data.staffOverrideNote && (
                 <p className="text-xs text-gray-500 italic">{aiResult.data.staffOverrideNote}</p>
               )}

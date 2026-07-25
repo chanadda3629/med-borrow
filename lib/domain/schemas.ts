@@ -209,8 +209,24 @@ export const aiRecommendationSchema = z.object({
 
 export const aiRecommendationResultSchema = z.object({
   recommendations: z.array(aiRecommendationSchema).min(1),
+  // Staff may confirm 1–5 equipment types. staffDecisionEquipmentType (singular)
+  // is kept for backward compatibility with results stored before multi-select.
+  staffDecisionEquipmentTypes: z.array(equipmentTypeSchema).min(1).max(5).optional(),
   staffDecisionEquipmentType: equipmentTypeSchema.optional(),
   staffOverrideNote: z.string().trim().min(1).optional(),
+});
+
+// "AI แนะนำอุปกรณ์" stage: staff confirm (or override) the AI recommendation.
+// Staff pick 1–5 equipment types. The AI result is optional — when the provider
+// was unavailable the staff decision is still recorded and the workflow still
+// advances (AI is decision support only).
+export const confirmRecommendationSchema = z.object({
+  aiRecommendationResult: aiRecommendationResultSchema.optional(),
+  staffDecisionEquipmentTypes: z
+    .array(equipmentTypeSchema)
+    .min(1, "กรุณาเลือกอุปกรณ์อย่างน้อย 1 รายการ")
+    .max(5, "เลือกอุปกรณ์ได้สูงสุด 5 รายการ"),
+  staffOverrideNote: optionalTextSchema,
 });
 
 export const lineContactChannelSchema = z.object({
@@ -318,6 +334,7 @@ export type ReturnConditionHistoryEntry = z.infer<
 export type EquipmentItem = z.infer<typeof equipmentItemSchema>;
 export type AIRecommendation = z.infer<typeof aiRecommendationSchema>;
 export type AIRecommendationResult = z.infer<typeof aiRecommendationResultSchema>;
+export type ConfirmRecommendationInput = z.infer<typeof confirmRecommendationSchema>;
 export type LineContactChannel = z.infer<typeof lineContactChannelSchema>;
 export type LineNotification = z.infer<typeof lineNotificationSchema>;
 export type ReturnData = z.infer<typeof returnDataSchema>;
