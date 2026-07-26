@@ -41,7 +41,7 @@ export function DeliveryTracker({ currentStatus }: { currentStatus: string }) {
 
   return (
     <div className="space-y-3">
-      <p className="text-base font-bold text-gray-900">{headline}</p>
+      <p className="text-base font-bold text-foreground">{headline}</p>
       <div className="flex items-center">
         {MILESTONES.map((milestone, idx) => {
           const isDone = idx < currentIdx
@@ -54,28 +54,28 @@ export function DeliveryTracker({ currentStatus }: { currentStatus: string }) {
                 <div
                   className={cn(
                     "w-9 h-9 rounded-full flex items-center justify-center transition-colors",
-                    isDone && "bg-emerald-500 text-white",
-                    isCurrent && "bg-orange-500 text-white ring-4 ring-orange-100",
-                    !isDone && !isCurrent && "bg-gray-100 text-gray-400",
+                    isDone && "bg-success text-white",
+                    isCurrent && "bg-accent-500 text-white ring-4 ring-accent-100",
+                    !isDone && !isCurrent && "bg-hairline text-faint",
                   )}
                 >
-                  <Icon className="w-5 h-5" strokeWidth={2.25} />
+                  <Icon className="w-5 h-5" strokeWidth={2} />
                 </div>
                 <span
                   className={cn(
                     "text-[10px] leading-tight text-center w-14",
-                    isCurrent ? "text-orange-600 font-semibold" : isDone ? "text-emerald-600" : "text-gray-400",
+                    isCurrent ? "text-accent-700 font-semibold" : isDone ? "text-success-text" : "text-faint",
                   )}
                 >
                   {milestone.label}
                 </span>
               </div>
               {!isLast && (
-                <div className="flex-1 h-1 mx-1 mb-5 rounded-full bg-gray-100 overflow-hidden">
+                <div className="flex-1 h-1 mx-1 mb-5 rounded-full bg-hairline overflow-hidden">
                   <div
                     className={cn(
                       "h-full rounded-full transition-all",
-                      idx < currentIdx ? "w-full bg-emerald-500" : "w-0",
+                      idx < currentIdx ? "w-full bg-success" : "w-0",
                     )}
                   />
                 </div>

@@ -74,7 +74,7 @@ export default async function InventoryItemPage({ params }: PageProps) {
               <TableBody>
                 {item.statusHistory.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} className="text-center text-gray-400 py-6">
+                    <TableCell colSpan={3} className="text-center text-muted py-6">
                       ยังไม่มีประวัติสถานะ
                     </TableCell>
                   </TableRow>
@@ -87,7 +87,7 @@ export default async function InventoryItemPage({ params }: PageProps) {
                       <TableCell>
                         <StatusBadge status={h.toStatus} type="equipment" />
                       </TableCell>
-                      <TableCell className="text-xs text-gray-500">
+                      <TableCell className="text-xs text-muted">
                         {formatThaiDateTime(h.changedAt)}
                       </TableCell>
                     </TableRow>
@@ -124,15 +124,15 @@ export default async function InventoryItemPage({ params }: PageProps) {
                         <span
                           className={`text-xs font-medium ${
                             r.condition === "ใช้งานได้"
-                              ? "text-green-600"
-                              : "text-red-600"
+                              ? "text-success"
+                              : "text-danger"
                           }`}
                         >
                           {r.condition}
                         </span>
                       </TableCell>
                       <TableCell className="text-xs">{r.receivingStaffName}</TableCell>
-                      <TableCell className="text-xs text-gray-500">
+                      <TableCell className="text-xs text-muted">
                         {r.damageNote ?? "-"}
                       </TableCell>
                     </TableRow>
@@ -156,8 +156,8 @@ function Row({
 }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="text-sm text-gray-500 w-36 shrink-0">{label}</span>
-      <span className="text-sm font-medium text-gray-900 flex-1">{value}</span>
+      <span className="text-sm text-muted w-36 shrink-0">{label}</span>
+      <span className="text-sm font-medium text-foreground flex-1">{value}</span>
     </div>
   )
 }

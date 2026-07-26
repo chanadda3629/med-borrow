@@ -20,18 +20,18 @@ export function WorkflowStatusStepper({ currentStatus }: { currentStatus: string
               <div className="flex flex-col items-center gap-1">
                 <div className={cn(
                   "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                  rejectedHere ? "bg-red-500 text-white" :
-                  isDone ? "bg-green-500 text-white" :
-                  isCurrent ? "bg-blue-600 text-white" :
-                  "bg-gray-200 text-gray-500"
+                  rejectedHere ? "bg-danger text-white" :
+                  isDone ? "bg-success text-white" :
+                  isCurrent ? "bg-accent-500 text-white" :
+                  "bg-hairline text-muted"
                 )}>{idx + 1}</div>
                 <span className={cn("text-xs text-center w-16 leading-tight",
-                  rejectedHere ? "text-red-600 font-medium" :
-                  isCurrent ? "text-blue-600 font-medium" : "text-gray-500"
+                  rejectedHere ? "text-danger-text font-medium" :
+                  isCurrent ? "text-accent-700 font-medium" : "text-muted"
                 )}>{step.label}</span>
               </div>
               {idx < WORKFLOW_DISPLAY_STEPS.length - 1 && (
-                <div className={cn("w-6 h-0.5 mb-5", isDone ? "bg-green-400" : "bg-gray-200")} />
+                <div className={cn("w-6 h-0.5 mb-5", isDone ? "bg-success" : "bg-hairline")} />
               )}
             </div>
           )

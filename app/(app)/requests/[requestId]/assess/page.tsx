@@ -40,7 +40,7 @@ export default async function AssessRequestPage({ params }: PageProps) {
       <PageHeader title="ฟอร์มประเมินและสั่งใช้อุปกรณ์" showBack />
 
       <div className="p-4 pb-24">
-        <p className="mb-4 text-sm text-gray-500">
+        <p className="mb-4 text-sm text-muted">
           คำร้อง {request.requestNumber}
           {request.patient.reporterName ? ` · ผู้แจ้ง: ${request.patient.reporterName}` : ""}
         </p>

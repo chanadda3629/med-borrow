@@ -52,7 +52,7 @@ export default async function LoanPage({ params }: PageProps) {
                 <Row label="หมายเลขครุภัณฑ์" value={request.assignedEquipmentItem.assetNumber} />
               </>
             ) : (
-              <p className="text-sm text-gray-400">ยังไม่มีอุปกรณ์ที่จัดสรร</p>
+              <p className="text-sm text-faint">ยังไม่มีอุปกรณ์ที่จัดสรร</p>
             )}
             {request.dueOrReturnDate && (
               <Row label="กำหนดคืนอุปกรณ์" value={formatThaiDate(request.dueOrReturnDate)} />
@@ -80,8 +80,8 @@ export default async function LoanPage({ params }: PageProps) {
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="text-sm text-gray-500 w-36 shrink-0">{label}</span>
-      <span className="text-sm font-medium text-gray-900 flex-1">{value}</span>
+      <span className="text-sm text-muted w-36 shrink-0">{label}</span>
+      <span className="text-sm font-medium text-foreground flex-1">{value}</span>
     </div>
   )
 }

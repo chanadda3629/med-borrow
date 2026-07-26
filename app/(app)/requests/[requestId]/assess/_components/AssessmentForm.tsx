@@ -137,24 +137,24 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
   return (
     <div className="space-y-4">
       {/* Section 1: Patient info */}
-      <Card className="rounded-2xl">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <User className="h-4 w-4 text-blue-600" />
+            <User className="h-4 w-4 text-accent-600" />
             ข้อมูลผู้ป่วย
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <Label>ชื่อผู้ป่วย</Label>
-            <div className="flex h-12 items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-base font-medium text-gray-900">
+            <div className="flex h-12 items-center rounded-md border border-border bg-surface-2 px-3 text-base font-medium text-foreground">
               {patientName}
             </div>
           </div>
 
           <div>
             <Label htmlFor="patientCondition">
-              อาการป่วย <span className="text-red-500">*</span>
+              อาการป่วย <span className="text-danger">*</span>
             </Label>
             <Textarea
               id="patientCondition"
@@ -166,8 +166,8 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
 
           <div>
             <Label htmlFor="urgencyLevel" className="flex items-center gap-1.5">
-              <AlertTriangle className="h-4 w-4 text-gray-400" />
-              ระดับความเร่งด่วน <span className="text-red-500">*</span>
+              <AlertTriangle className="h-4 w-4 text-faint" />
+              ระดับความเร่งด่วน <span className="text-danger">*</span>
             </Label>
             <Select
               id="urgencyLevel"
@@ -185,10 +185,10 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
       </Card>
 
       {/* Section 2: Assessment result */}
-      <Card className="rounded-2xl">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Stethoscope className="h-4 w-4 text-blue-600" />
+            <Stethoscope className="h-4 w-4 text-accent-600" />
             ผลการประเมินอาการ
           </CardTitle>
         </CardHeader>
@@ -196,8 +196,8 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="assessorName" className="flex items-center gap-1.5">
-                <User className="h-4 w-4 text-gray-400" />
-                ชื่อผู้ประเมิน <span className="text-red-500">*</span>
+                <User className="h-4 w-4 text-faint" />
+                ชื่อผู้ประเมิน <span className="text-danger">*</span>
               </Label>
               <Input
                 id="assessorName"
@@ -208,7 +208,7 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
             </div>
             <div>
               <Label htmlFor="assessedAt" className="flex items-center gap-1.5">
-                <CalendarDays className="h-4 w-4 text-gray-400" />
+                <CalendarDays className="h-4 w-4 text-faint" />
                 วันที่ประเมิน
               </Label>
               <DatePicker
@@ -223,8 +223,8 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
 
           <div>
             <Label htmlFor="assessmentSummary" className="flex items-center gap-1.5">
-              <ClipboardCheck className="h-4 w-4 text-gray-400" />
-              ประเมินอาการเบื้องต้น <span className="text-red-500">*</span>
+              <ClipboardCheck className="h-4 w-4 text-faint" />
+              ประเมินอาการเบื้องต้น <span className="text-danger">*</span>
             </Label>
             <Textarea
               id="assessmentSummary"
@@ -237,10 +237,10 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
       </Card>
 
       {/* Section 3: Equipment needed */}
-      <Card className="rounded-2xl">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Package className="h-4 w-4 text-blue-600" />
+            <Package className="h-4 w-4 text-accent-600" />
             อุปกรณ์ที่ต้องการใช้งาน
           </CardTitle>
         </CardHeader>
@@ -248,9 +248,9 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
           <div>
             <Label className="flex items-center justify-between">
               <span>
-                ชื่ออุปกรณ์ (เลือกได้ 1–{MAX_EQUIPMENT} รายการ) <span className="text-red-500">*</span>
+                ชื่ออุปกรณ์ (เลือกได้ 1–{MAX_EQUIPMENT} รายการ) <span className="text-danger">*</span>
               </span>
-              <span className="text-xs font-normal text-gray-500">
+              <span className="text-xs font-normal text-muted">
                 เลือกแล้ว {selected.length}/{MAX_EQUIPMENT}
               </span>
             </Label>
@@ -265,20 +265,20 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
                     onClick={() => toggleEquipment(type)}
                     disabled={disabled}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors",
-                      checked ? "border-blue-500 bg-blue-50" : "border-gray-200",
+                      "flex w-full items-center gap-3 rounded-md border-2 p-3 text-left transition-all duration-150 ease-apple",
+                      checked ? "border-accent-500 bg-accent-50" : "border-hairline",
                       disabled && "cursor-not-allowed opacity-40",
                     )}
                   >
                     <span
                       className={cn(
                         "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2",
-                        checked ? "border-blue-600 bg-blue-600 text-white" : "border-gray-300",
+                        checked ? "border-accent-600 bg-accent-600 text-white" : "border-border",
                       )}
                     >
                       {checked && <Check className="h-3.5 w-3.5" />}
                     </span>
-                    <span className="text-sm font-medium text-gray-900">{type}</span>
+                    <span className="text-sm font-medium text-foreground">{type}</span>
                   </button>
                 )
               })}
@@ -308,7 +308,7 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
       </Card>
 
       {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="rounded-md border border-danger bg-danger-soft px-3 py-2 text-sm text-danger-text">
           {error}
         </p>
       )}
@@ -316,7 +316,7 @@ export function AssessmentForm({ requestId, patientName, initial }: AssessmentFo
       <div className="flex gap-3">
         <Button
           type="button"
-          variant="outline"
+          variant="secondary"
           className="flex-1"
           onClick={handleReset}
           disabled={submitting}

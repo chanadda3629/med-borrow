@@ -40,7 +40,7 @@ export default async function AIRecommendationPage({ params }: PageProps) {
       <PageHeader title="คำแนะนำอุปกรณ์จาก AI" showBack />
 
       <div className="p-4 pb-24">
-        <p className="mb-4 text-sm text-gray-500">
+        <p className="mb-4 text-sm text-muted">
           คำร้อง {request.requestNumber} · ผู้ป่วย: {request.patient.fullName}
         </p>
         <RecommendationForm

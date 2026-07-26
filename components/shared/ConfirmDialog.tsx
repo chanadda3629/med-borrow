@@ -2,6 +2,8 @@
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 
+// Center confirmation dialog — DESIGN.md §8 (short confirmations only). Glass
+// backdrop with 4px blur; opaque card.
 interface ConfirmDialogProps {
   trigger: React.ReactNode
   title: string
@@ -29,19 +31,19 @@ export function ConfirmDialog({
     <>
       <div onClick={() => setOpen(true)}>{trigger}</div>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-sm mx-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-            <p className="text-sm text-gray-500 mb-6">{description}</p>
-            <div className="flex gap-3 justify-end">
+        <div className="fixed inset-0 z-50 flex items-center justify-center animate-[overlay-in_0.15s_ease-out]">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[4px]" onClick={() => setOpen(false)} />
+          <div className="relative mx-4 w-full max-w-sm rounded-xl bg-surface p-6 shadow-xl animate-[pop-in_0.2s_var(--ease-apple)]">
+            <h3 className="mb-2 text-lg font-semibold text-foreground">{title}</h3>
+            <p className="mb-6 text-sm text-muted">{description}</p>
+            <div className="flex justify-end gap-3">
               <button onClick={() => setOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                className="rounded-md border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-hairline active:scale-[0.97]">
                 {cancelLabel}
               </button>
               <button onClick={handleConfirm} disabled={loading}
-                className={cn("px-4 py-2 text-sm font-medium text-white rounded-lg disabled:opacity-50",
-                  variant === "destructive" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700")}>
+                className={cn("rounded-md px-4 py-2 text-sm font-medium text-white transition-all active:scale-[0.97] disabled:opacity-50",
+                  variant === "destructive" ? "bg-danger hover:brightness-95" : "bg-accent-500 hover:bg-accent-600")}>
                 {loading ? "กำลังดำเนินการ..." : confirmLabel}
               </button>
             </div>

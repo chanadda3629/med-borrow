@@ -3,6 +3,14 @@ import { useState } from "react"
 import Link from "next/link"
 import { X } from "lucide-react"
 import { StatusBadge } from "@/components/shared/StatusBadge"
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table"
 import { formatThaiDate } from "@/lib/utils/format-thai-date"
 
 export interface InventoryRow {
@@ -22,48 +30,45 @@ export function InventoryTable({ rows }: { rows: InventoryRow[] }) {
 
   return (
     <>
-      <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
-        <table className="w-full min-w-[560px] border-collapse text-left">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50 text-xs font-medium text-gray-500">
-              <th className="px-4 py-3">รหัสครุภัณฑ์</th>
-              <th className="px-4 py-3">ชื่ออุปกรณ์</th>
-              <th className="px-4 py-3">สถานะอุปกรณ์</th>
-              <th className="px-4 py-3">สภาพอุปกรณ์</th>
-              <th className="px-4 py-3 text-right">รายละเอียด</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div className="overflow-hidden rounded-lg bg-surface shadow-sm">
+        <Table className="min-w-[560px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead>รหัสครุภัณฑ์</TableHead>
+              <TableHead>ชื่ออุปกรณ์</TableHead>
+              <TableHead>สถานะอุปกรณ์</TableHead>
+              <TableHead>สภาพอุปกรณ์</TableHead>
+              <TableHead className="text-right">รายละเอียด</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60"
-              >
-                <td className="px-4 py-3 text-sm font-semibold text-blue-600">
+              <TableRow key={row.id}>
+                <TableCell className="text-sm font-semibold text-accent-600">
                   {row.equipmentCode}
-                </td>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                </TableCell>
+                <TableCell className="text-sm font-medium text-foreground">
                   {row.equipmentType}
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell>
                   <StatusBadge status={row.currentStatus} type="equipment" />
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell>
                   <StatusBadge status={row.condition} type="condition" />
-                </td>
-                <td className="px-4 py-3 text-right">
+                </TableCell>
+                <TableCell className="text-right">
                   <button
                     type="button"
                     onClick={() => setSelected(row)}
-                    className="rounded-full bg-blue-50 px-3.5 py-1.5 text-xs font-medium text-blue-600 hover:bg-blue-100"
+                    className="rounded-full bg-accent-50 px-3.5 py-1.5 text-xs font-medium text-accent-700 transition-all duration-150 ease-apple hover:bg-accent-100 active:scale-[0.97]"
                   >
                     ดูข้อมูล
                   </button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {selected && (
@@ -84,24 +89,24 @@ function ItemDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
     >
       <div
-        className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+        className="w-full max-w-sm rounded-xl bg-surface p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-foreground">
             {row.equipmentType}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="ปิด"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-faint transition-all duration-150 ease-apple hover:bg-hairline active:scale-[0.97]"
           >
             <X className="h-5 w-5" />
           </button>
@@ -127,7 +132,7 @@ function ItemDetailModal({
         <div className="mt-6 flex justify-end">
           <Link
             href={`/inventory/${row.id}`}
-            className="rounded-full bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="rounded-md bg-accent-500 px-5 py-2 text-sm font-medium text-white transition-all duration-150 ease-apple hover:bg-accent-600 active:scale-[0.97]"
           >
             ดูประวัติทั้งหมด
           </Link>
@@ -146,8 +151,8 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="text-sm text-gray-500">{label}</dt>
-      <dd className="text-sm font-medium text-gray-900">{value}</dd>
+      <dt className="text-sm text-muted">{label}</dt>
+      <dd className="text-sm font-medium text-foreground">{value}</dd>
     </div>
   )
 }

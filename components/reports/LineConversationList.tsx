@@ -41,27 +41,27 @@ export function LineConversationList({ conversations }: LineConversationListProp
   const selected = conversations.find((c) => c.patientId === selectedId) ?? null
 
   if (conversations.length === 0) {
-    return <p className="p-4 text-sm text-gray-400">ยังไม่มีประวัติ</p>
+    return <p className="p-4 text-sm text-faint">ยังไม่มีประวัติ</p>
   }
 
   return (
     <>
-      <div className="divide-y divide-gray-50">
+      <div className="divide-y divide-hairline">
         {conversations.map((c) => (
           <button
             key={c.patientId}
             type="button"
             onClick={() => setSelectedId(c.patientId)}
-            className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50"
+            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-all duration-150 ease-apple hover:bg-canvas"
           >
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="truncate font-medium text-gray-900">{c.fullName}</p>
+                <p className="truncate font-medium text-foreground">{c.fullName}</p>
                 {!c.linked && <Badge variant="secondary">ยังไม่เชื่อมต่อ</Badge>}
               </div>
-              <p className="truncate text-sm text-gray-500">{c.lastMessagePreview}</p>
+              <p className="truncate text-sm text-muted">{c.lastMessagePreview}</p>
             </div>
-            <span className="shrink-0 text-xs text-gray-400">
+            <span className="shrink-0 text-xs text-faint">
               {new Date(c.lastActivityAt).toLocaleDateString("th-TH", { day: "numeric", month: "short" })}
             </span>
           </button>

@@ -88,12 +88,12 @@ export default async function ApproveRequestPage({ params }: PageProps) {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between gap-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <EquipmentIcon type={thaiType} className="h-5 w-5 text-gray-500" />
+                <EquipmentIcon type={thaiType} className="h-5 w-5 text-muted" />
                 คลังอุปกรณ์: {thaiType}
               </CardTitle>
               <Link
                 href={`/inventory?type=${encodeURIComponent(thaiType)}`}
-                className="shrink-0 text-xs font-medium text-blue-600 hover:underline"
+                className="shrink-0 text-xs font-medium text-accent-600 hover:underline"
               >
                 ดูในคลัง
               </Link>
@@ -102,14 +102,14 @@ export default async function ApproveRequestPage({ params }: PageProps) {
           <CardContent className="space-y-3">
             <div className="flex items-baseline gap-4">
               <div>
-                <div className="text-2xl font-semibold text-green-600">
+                <div className="text-2xl font-semibold text-success">
                   {availableItems.length}
                 </div>
-                <div className="text-xs text-gray-500">พร้อมใช้งาน</div>
+                <div className="text-xs text-muted">พร้อมใช้งาน</div>
               </div>
               <div>
-                <div className="text-2xl font-semibold text-gray-900">{itemsOfType.length}</div>
-                <div className="text-xs text-gray-500">ทั้งหมด</div>
+                <div className="text-2xl font-semibold text-foreground">{itemsOfType.length}</div>
+                <div className="text-xs text-muted">ทั้งหมด</div>
               </div>
             </div>
 
@@ -118,12 +118,12 @@ export default async function ApproveRequestPage({ params }: PageProps) {
                 {statusBreakdown.map(({ status, count }) => (
                   <span key={status} className="inline-flex items-center gap-1.5">
                     <StatusBadge status={status} type="equipment" />
-                    <span className="text-sm font-medium text-gray-700">{count}</span>
+                    <span className="text-sm font-medium text-foreground">{count}</span>
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">ยังไม่มีอุปกรณ์ประเภทนี้ในคลัง</p>
+              <p className="text-sm text-muted">ยังไม่มีอุปกรณ์ประเภทนี้ในคลัง</p>
             )}
           </CardContent>
         </Card>
@@ -154,8 +154,8 @@ export default async function ApproveRequestPage({ params }: PageProps) {
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="text-sm text-gray-500 w-32 shrink-0">{label}</span>
-      <span className="text-sm font-medium text-gray-900 flex-1">{value}</span>
+      <span className="text-sm text-muted w-32 shrink-0">{label}</span>
+      <span className="text-sm font-medium text-foreground flex-1">{value}</span>
     </div>
   )
 }

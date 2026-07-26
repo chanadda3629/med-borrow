@@ -55,13 +55,13 @@ export function RequestsFilters({
     <div className="space-y-3">
       {/* Search pill */}
       <div className="flex items-center gap-2">
-        <div className="flex h-12 flex-1 items-center gap-2 rounded-full border border-gray-300 bg-white px-4 focus-within:border-transparent focus-within:ring-2 focus-within:ring-blue-500">
-          <Search className="h-5 w-5 shrink-0 text-gray-400" />
+        <div className="flex h-12 flex-1 items-center gap-2 rounded-full border border-border bg-surface px-4 transition-all duration-150 ease-apple focus-within:border-accent-500 focus-within:ring-[3px] focus-within:ring-accent-500/15">
+          <Search className="h-5 w-5 shrink-0 text-faint" />
           <input
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="ค้นหาชื่อผู้ป่วย..."
-            className="w-full bg-transparent text-base placeholder:text-gray-400 focus:outline-none"
+            className="w-full bg-transparent text-base placeholder:text-faint focus:outline-none"
           />
         </div>
         {query && (
@@ -69,7 +69,7 @@ export function RequestsFilters({
             type="button"
             onClick={clearSearch}
             aria-label="ล้างคำค้นหา"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted transition-all duration-150 ease-apple hover:bg-hairline"
           >
             <X className="h-5 w-5" />
           </button>
@@ -84,12 +84,12 @@ export function RequestsFilters({
             value={currentSort === "asc" ? "asc" : "desc"}
             onChange={(e) => setParam("sort", e.target.value === "asc" ? "asc" : "")}
             aria-label="เรียงลำดับ"
-            className="h-9 appearance-none rounded-full bg-gray-100 pl-4 pr-8 text-sm font-medium text-gray-700 hover:bg-gray-200 focus:outline-none"
+            className="h-9 appearance-none rounded-full border border-border bg-surface pl-4 pr-8 text-sm font-medium text-muted transition-all duration-150 ease-apple hover:bg-hairline focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-500/15"
           >
             <option value="desc">ใหม่สุด</option>
             <option value="asc">เก่าสุด</option>
           </select>
-          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+          <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
         </div>
 
         {/* Status chips */}
@@ -101,10 +101,10 @@ export function RequestsFilters({
               type="button"
               onClick={() => toggleParam("status", s)}
               className={cn(
-                "h-9 shrink-0 whitespace-nowrap rounded-full px-3.5 text-sm font-medium",
+                "h-9 shrink-0 whitespace-nowrap rounded-full border px-3.5 text-sm font-medium transition-all duration-150 ease-apple active:scale-[0.97] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-500/15",
                 active
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200",
+                  ? "border-accent-500 bg-accent-500 text-white"
+                  : "border-border bg-surface text-muted hover:bg-hairline",
               )}
             >
               {s}

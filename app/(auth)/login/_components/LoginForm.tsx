@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export function LoginForm() {
   const router = useRouter()
@@ -29,22 +32,19 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+    <form onSubmit={handleSubmit} className="bg-surface rounded-lg shadow-sm p-6 space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
-        <input id="email" name="email" type="email" required autoComplete="email"
-          className="w-full h-12 px-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <Label htmlFor="email">อีเมล</Label>
+        <Input id="email" name="email" type="email" required autoComplete="email" />
       </div>
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label>
-        <input id="password" name="password" type="password" required autoComplete="current-password"
-          className="w-full h-12 px-3 border border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <Label htmlFor="password">รหัสผ่าน</Label>
+        <Input id="password" name="password" type="password" required autoComplete="current-password" />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      <button type="submit" disabled={loading}
-        className="w-full h-12 bg-blue-600 text-white rounded-lg font-medium disabled:opacity-50">
+      {error && <p className="text-sm text-danger">{error}</p>}
+      <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
-      </button>
+      </Button>
     </form>
   )
 }

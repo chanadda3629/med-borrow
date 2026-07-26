@@ -107,7 +107,7 @@ function LocateUser({
               radius: 9,
               color: "#ffffff",
               weight: 3,
-              fillColor: "#2563eb",
+              fillColor: "#0A7EA4",
               fillOpacity: 1,
             })
               .addTo(map)
@@ -149,7 +149,7 @@ export function LeafletHeatMap({
   const [locate, setLocate] = useState<(() => void) | null>(null)
 
   return (
-    <div className="relative h-80 w-full rounded-lg overflow-hidden border border-gray-200">
+    <div className="relative h-80 w-full rounded-lg overflow-hidden border border-hairline">
       <MapContainer center={center} zoom={zoom} className="h-full w-full" style={{ zIndex: 0 }}>
         {satellite ? (
           <>
@@ -177,7 +177,7 @@ export function LeafletHeatMap({
         <button
           type="button"
           onClick={() => locate?.()}
-          className="absolute top-2 right-2 z-[400] flex items-center gap-1 rounded-lg bg-white/95 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm border border-gray-200 hover:bg-white"
+          className="absolute top-2 right-2 z-[400] flex items-center gap-1 rounded-lg bg-surface/95 px-3 py-1.5 text-xs font-medium text-foreground shadow-sm border border-hairline transition-all duration-150 ease-apple hover:bg-surface"
         >
           <MapPin className="h-3.5 w-3.5" />
           ตำแหน่งฉัน

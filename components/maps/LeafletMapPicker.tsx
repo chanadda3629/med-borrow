@@ -7,7 +7,7 @@ import "leaflet/dist/leaflet.css"
 
 const PIN_SVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="34" height="44" viewBox="0 0 34 44">
-  <path d="M17 0C7.6 0 0 7.6 0 17c0 12.75 17 27 17 27s17-14.25 17-27C34 7.6 26.4 0 17 0z" fill="#0d9488"/>
+  <path d="M17 0C7.6 0 0 7.6 0 17c0 12.75 17 27 17 27s17-14.25 17-27C34 7.6 26.4 0 17 0z" fill="#0A7EA4"/>
   <circle cx="17" cy="17" r="6.5" fill="#ffffff"/>
 </svg>
 `.trim()
@@ -92,7 +92,7 @@ function LocateMeControl({ onLocate }: { onLocate: (lat: number, lng: number, zo
           type="button"
           onClick={locate}
           title="ค้นหาตำแหน่งของฉัน"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-teal-700 shadow-lg ring-1 ring-black/5 hover:bg-gray-50 active:scale-95 transition"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-surface text-accent-700 shadow-lg ring-1 ring-black/5 hover:bg-canvas active:scale-95 transition-all duration-150 ease-apple"
         >
           {status === "locating" ? (
             <Loader2 className="h-4.5 w-4.5 animate-spin" />
@@ -101,7 +101,7 @@ function LocateMeControl({ onLocate }: { onLocate: (lat: number, lng: number, zo
           )}
         </button>
         {status === "error" && (
-          <div className="mt-1.5 rounded-md bg-white px-2 py-1 text-[10px] text-red-600 shadow">
+          <div className="mt-1.5 rounded-md bg-surface px-2 py-1 text-[10px] text-danger shadow">
             หาตำแหน่งไม่สำเร็จ
           </div>
         )}
@@ -239,25 +239,25 @@ export function LeafletMapPicker({ initialLat = FALLBACK_LAT, initialLng = FALLB
   }
 
   return (
-    <div className="w-full overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+    <div className="w-full overflow-hidden rounded-lg border border-hairline bg-surface shadow-sm">
       <div className="relative">
         {/* Search bar overlay, LINE-style */}
         <div className="absolute inset-x-3 top-3 z-[1000]">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
             <input
               type="text"
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
               onFocus={() => setShowResults(true)}
               placeholder="ค้นหาสถานที่หรือที่อยู่ผู้ป่วย"
-              className="w-full rounded-full border border-gray-200 bg-white/95 py-2.5 pl-10 pr-9 text-sm text-gray-800 shadow-lg backdrop-blur placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full rounded-full border border-hairline bg-surface/95 py-2.5 pl-10 pr-9 text-sm text-foreground shadow-lg backdrop-blur placeholder:text-faint focus:outline-none focus:border-accent-500 focus:ring-[3px] focus:ring-accent-500/15"
             />
             {query && (
               <button
                 type="button"
                 onClick={clearQuery}
-                className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
+                className="absolute right-2.5 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-faint hover:bg-hairline"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -265,9 +265,9 @@ export function LeafletMapPicker({ initialLat = FALLBACK_LAT, initialLng = FALLB
           </div>
 
           {showResults && query.trim().length >= 3 && (
-            <div className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-lg">
+            <div className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-hairline bg-surface shadow-lg">
               {isSearching ? (
-                <div className="flex items-center gap-2 px-3.5 py-3 text-xs text-gray-400">
+                <div className="flex items-center gap-2 px-3.5 py-3 text-xs text-faint">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   กำลังค้นหาสถานที่...
                 </div>
@@ -277,19 +277,19 @@ export function LeafletMapPicker({ initialLat = FALLBACK_LAT, initialLng = FALLB
                     key={`${r.lat}-${r.lng}-${i}`}
                     type="button"
                     onClick={() => handleSelectResult(r)}
-                    className="flex w-full items-start gap-2.5 border-b border-gray-100 px-3.5 py-2.5 text-left last:border-b-0 hover:bg-gray-50"
+                    className="flex w-full items-start gap-2.5 border-b border-hairline px-3.5 py-2.5 text-left last:border-b-0 hover:bg-canvas"
                   >
-                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent-600" />
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-gray-800">{r.primary}</span>
+                      <span className="block truncate text-sm font-medium text-foreground">{r.primary}</span>
                       {r.secondary && (
-                        <span className="block truncate text-xs text-gray-500">{r.secondary}</span>
+                        <span className="block truncate text-xs text-muted">{r.secondary}</span>
                       )}
                     </span>
                   </button>
                 ))
               ) : (
-                <div className="px-3.5 py-3 text-xs text-gray-400">ไม่พบสถานที่ที่ค้นหา</div>
+                <div className="px-3.5 py-3 text-xs text-faint">ไม่พบสถานที่ที่ค้นหา</div>
               )}
             </div>
           )}
@@ -328,21 +328,21 @@ export function LeafletMapPicker({ initialLat = FALLBACK_LAT, initialLng = FALLB
       </div>
 
       {pin && (
-        <div className="border-t border-gray-100 bg-gray-50/60 px-4 py-3">
+        <div className="border-t border-hairline bg-surface-2 px-4 py-3">
           <div className="flex items-start gap-2">
-            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-teal-600" />
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-accent-600" />
             <div className="min-w-0">
               {isResolvingAddress ? (
-                <p className="flex items-center gap-1.5 text-sm text-gray-400">
+                <p className="flex items-center gap-1.5 text-sm text-faint">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   กำลังค้นหาชื่อสถานที่...
                 </p>
               ) : (
-                <p className="text-sm font-medium leading-snug text-gray-800">
+                <p className="text-sm font-medium leading-snug text-foreground">
                   {addressLabel ?? "ตำแหน่งที่ปักหมุด"}
                 </p>
               )}
-              <p className="mt-0.5 text-xs font-medium text-teal-700">
+              <p className="mt-0.5 text-xs font-medium text-accent-700">
                 พิกัด: {pin.lat.toFixed(6)}, {pin.lng.toFixed(6)}
               </p>
             </div>

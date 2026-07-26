@@ -81,8 +81,8 @@ export default async function ReturnPage({ params }: PageProps) {
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="text-sm text-gray-500 w-36 shrink-0">{label}</span>
-      <span className="text-sm font-medium text-gray-900 flex-1">{value}</span>
+      <span className="text-sm text-muted w-36 shrink-0">{label}</span>
+      <span className="text-sm font-medium text-foreground flex-1">{value}</span>
     </div>
   )
 }

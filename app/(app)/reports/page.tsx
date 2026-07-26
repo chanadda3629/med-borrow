@@ -103,22 +103,22 @@ export default async function ReportsPage() {
           <CardHeader><CardTitle>สรุปคลังอุปกรณ์ตามประเภท</CardTitle></CardHeader>
           <CardContent className="p-0">
             {typeStats.length === 0 ? (
-              <p className="p-4 text-sm text-gray-400">ยังไม่มีข้อมูล</p>
+              <p className="p-4 text-sm text-faint">ยังไม่มีข้อมูล</p>
             ) : (
               <table className="w-full text-sm">
-                <thead><tr className="border-b border-gray-100">
-                  <th className="text-left px-4 py-2 text-gray-500">ประเภท</th>
-                  <th className="text-right px-4 py-2 text-green-600">พร้อม</th>
-                  <th className="text-right px-4 py-2 text-blue-600">ยืม</th>
-                  <th className="text-right px-4 py-2 text-red-600">ชำรุด</th>
+                <thead><tr className="border-b border-hairline">
+                  <th className="text-left px-4 py-2 text-muted">ประเภท</th>
+                  <th className="text-right px-4 py-2 text-success">พร้อม</th>
+                  <th className="text-right px-4 py-2 text-info">ยืม</th>
+                  <th className="text-right px-4 py-2 text-danger">ชำรุด</th>
                 </tr></thead>
                 <tbody>
                   {typeStats.map((t) => (
-                    <tr key={t.type} className="border-b border-gray-50">
-                      <td className="px-4 py-3 font-medium">{t.type}</td>
-                      <td className="px-4 py-3 text-right text-green-700">{t.available}</td>
-                      <td className="px-4 py-3 text-right text-blue-700">{t.onLoan}</td>
-                      <td className="px-4 py-3 text-right text-red-700">{t.damaged}</td>
+                    <tr key={t.type} className="border-b border-hairline">
+                      <td className="px-4 py-3 font-medium text-foreground">{t.type}</td>
+                      <td className="px-4 py-3 text-right text-success-text">{t.available}</td>
+                      <td className="px-4 py-3 text-right text-info-text">{t.onLoan}</td>
+                      <td className="px-4 py-3 text-right text-danger-text">{t.damaged}</td>
                     </tr>
                   ))}
                 </tbody>

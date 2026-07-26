@@ -36,7 +36,7 @@ import {
 // Dynamic import of the map to avoid SSR issues with Leaflet
 const LeafletMapPicker = dynamic(
   () => import("@/components/maps/LeafletMapPicker").then((m) => m.LeafletMapPicker),
-  { ssr: false, loading: () => <div className="h-64 w-full rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">กำลังโหลดแผนที่...</div> }
+  { ssr: false, loading: () => <div className="h-64 w-full rounded-lg bg-canvas flex items-center justify-center text-faint">กำลังโหลดแผนที่...</div> }
 )
 
 // ─── Form shape ─────────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ const STEPS = [
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null
-  return <p className="text-red-600 text-xs mt-1">{message}</p>
+  return <p className="text-danger text-xs mt-1">{message}</p>
 }
 
 // Marks a field as required with a red asterisk, consistent across the form.
@@ -101,9 +101,9 @@ function RequiredLabel({
 }) {
   return (
     <Label htmlFor={htmlFor} className="flex items-center gap-1.5">
-      <Icon className="w-4 h-4 text-gray-400" />
+      <Icon className="w-4 h-4 text-faint" />
       {children}
-      <span className="text-red-500">*</span>
+      <span className="text-danger">*</span>
     </Label>
   )
 }
@@ -134,14 +134,14 @@ function Step1Personal() {
   }, [dob, setValue])
 
   return (
-    <Card className="rounded-2xl">
+    <Card>
       <CardContent className="p-5 space-y-5">
         <div>
-          <p className="text-xs font-medium text-gray-400 tracking-wide uppercase">
+          <p className="text-xs font-medium text-faint tracking-wide uppercase">
             ข้อมูลผู้ป่วย
           </p>
-          <p className="text-xs text-gray-500 mt-1">
-            กรุณากรอกข้อมูลที่มีเครื่องหมาย <span className="text-red-500">*</span> ให้ครบถ้วนและถูกต้อง
+          <p className="text-xs text-muted mt-1">
+            กรุณากรอกข้อมูลที่มีเครื่องหมาย <span className="text-danger">*</span> ให้ครบถ้วนและถูกต้อง
           </p>
         </div>
 
@@ -193,14 +193,14 @@ function Step1Personal() {
 
         <div>
           <Label htmlFor="age" className="flex items-center gap-1.5">
-            <CalendarDays className="w-4 h-4 text-gray-400" />
+            <CalendarDays className="w-4 h-4 text-faint" />
             อายุ (คำนวณอัตโนมัติ)
           </Label>
           <Input
             id="age"
             type="number"
             readOnly
-            className="bg-gray-50"
+            className="bg-canvas"
             {...register("age")}
           />
         </div>
@@ -281,14 +281,14 @@ function Step2Address() {
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-2xl">
+      <Card>
         <CardContent className="p-5 space-y-5">
           <div>
-            <p className="text-xs font-medium text-gray-400 tracking-wide uppercase">
+            <p className="text-xs font-medium text-faint tracking-wide uppercase">
               ที่อยู่ผู้ป่วย
             </p>
-            <p className="text-xs text-gray-500 mt-1">
-              กรุณากรอกข้อมูลที่มีเครื่องหมาย <span className="text-red-500">*</span> ให้ครบถ้วนและถูกต้อง
+            <p className="text-xs text-muted mt-1">
+              กรุณากรอกข้อมูลที่มีเครื่องหมาย <span className="text-danger">*</span> ให้ครบถ้วนและถูกต้อง
             </p>
           </div>
 
@@ -312,13 +312,13 @@ function Step2Address() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl">
+      <Card>
         <CardContent className="p-5 space-y-2">
           <Label className="flex items-center gap-1.5">
-            <MapPinned className="w-4 h-4 text-gray-400" />
+            <MapPinned className="w-4 h-4 text-faint" />
             ปักหมุดที่อยู่บนแผนที่
           </Label>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             ค้นหาสถานที่ แตะที่แผนที่ หรือกดปุ่มค้นหาตำแหน่งของฉันเพื่อระบุตำแหน่งบ้านผู้ป่วย
           </p>
           <LeafletMapPicker
@@ -327,7 +327,7 @@ function Step2Address() {
             onPinChange={handlePinChange}
           />
           {errors.location?.latitude && (
-            <p className="text-red-600 text-xs">กรุณาปักหมุดตำแหน่งบนแผนที่</p>
+            <p className="text-danger text-xs">กรุณาปักหมุดตำแหน่งบนแผนที่</p>
           )}
         </CardContent>
       </Card>
@@ -354,11 +354,11 @@ function Step3Photos() {
       <div>
         <div className="flex items-center justify-between mb-1">
           <Label className="mb-0">
-            รูปภาพผู้ป่วย <span className="text-red-500">*</span>
+            รูปภาพผู้ป่วย <span className="text-danger">*</span>
           </Label>
           <Badge variant="secondary">{patientPhotoCount} / {MAX_PHOTOS}</Badge>
         </div>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-muted mb-3">
           อัปโหลดรูปภาพผู้ป่วยอย่างน้อย 1 รูป (สูงสุด {MAX_PHOTOS} รูป)
         </p>
         <Controller
@@ -384,11 +384,11 @@ function Step3Photos() {
       <div>
         <div className="flex items-center justify-between mb-1">
           <Label className="mb-0">
-            รูปภาพสภาพแวดล้อมบ้าน <span className="text-red-500">*</span>
+            รูปภาพสภาพแวดล้อมบ้าน <span className="text-danger">*</span>
           </Label>
           <Badge variant="secondary">{homeEnvPhotoCount} / {MAX_PHOTOS}</Badge>
         </div>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-muted mb-3">
           ถ่ายรูปภายในบ้านเพื่อประกอบการพิจารณาอุปกรณ์อย่างน้อย 1 รูป (สูงสุด {MAX_PHOTOS} รูป)
         </p>
         <Controller
@@ -459,14 +459,14 @@ function Step6Summary() {
           />
           {values.location?.latitude !== 0 && (
             <div className="flex gap-2">
-              <span className="text-gray-500 min-w-[120px] flex-shrink-0">
+              <span className="text-muted min-w-[120px] flex-shrink-0">
                 ตำแหน่งบนแผนที่:
               </span>
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${values.location?.latitude},${values.location?.longitude}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 hover:underline font-medium break-all"
+                className="inline-flex items-center gap-1.5 text-accent-600 hover:text-accent-700 hover:underline font-medium break-all"
               >
                 <MapPin className="w-4 h-4 flex-shrink-0" />
                 <span>เปิดใน Google Maps</span>
@@ -477,8 +477,8 @@ function Step6Summary() {
         </CardContent>
       </Card>
 
-      <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-        <p className="text-sm text-amber-800">
+      <div className="p-4 bg-warning-soft rounded-lg border border-warning/20">
+        <p className="text-sm text-warning-text">
           กรุณาตรวจสอบข้อมูลให้ครบถ้วนก่อนกดบันทึก เมื่อบันทึกแล้วระบบจะสร้างคำร้อง
           และดำเนินการประเมินอาการในขั้นตอนถัดไป
         </p>
@@ -490,8 +490,8 @@ function Step6Summary() {
 function Row({ label, value }: { label: string; value?: string | null }) {
   return (
     <div className="flex gap-2">
-      <span className="text-gray-500 min-w-[120px] flex-shrink-0">{label}:</span>
-      <span className="text-gray-900 break-all">{value ?? "-"}</span>
+      <span className="text-muted min-w-[120px] flex-shrink-0">{label}:</span>
+      <span className="text-foreground break-all">{value ?? "-"}</span>
     </div>
   )
 }
@@ -623,29 +623,29 @@ export function PatientIntakeWizard() {
   return (
     <FormProvider {...methods}>
       {/* Step indicator */}
-      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+      <div className="px-4 py-3 bg-canvas border-b border-border">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           {STEPS.map((label, i) => (
             <div key={label} className="flex items-center gap-1.5 flex-shrink-0">
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors duration-150 ease-apple ${
                   i < step
-                    ? "bg-green-500 text-white"
+                    ? "bg-success text-white"
                     : i === step
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-500"
+                    ? "bg-accent-500 text-white"
+                    : "bg-hairline text-muted"
                 }`}
               >
                 {i < step ? <Check className="w-4 h-4" /> : i + 1}
               </div>
               <span
                 className={`text-xs whitespace-nowrap ${
-                  i === step ? "text-blue-600 font-medium" : "text-gray-400"
+                  i === step ? "text-accent-600 font-medium" : "text-faint"
                 }`}
               >
                 {label}
               </span>
-              {i < STEPS.length - 1 && <div className="w-4 h-px bg-gray-300 flex-shrink-0" />}
+              {i < STEPS.length - 1 && <div className="w-4 h-px bg-border flex-shrink-0" />}
             </div>
           ))}
         </div>
@@ -656,7 +656,7 @@ export function PatientIntakeWizard() {
 
       {/* Step content */}
       <div className="p-4 pb-32">
-        <h2 className="text-base font-semibold text-gray-800 mb-4">
+        <h2 className="text-base font-semibold text-foreground mb-4">
           ขั้นตอนที่ {step + 1}: {STEPS[step]}
         </h2>
         {stepComponents[step]}
@@ -664,14 +664,14 @@ export function PatientIntakeWizard() {
 
       {/* Submit error */}
       {submitError && (
-        <div className="mx-4 mb-4 p-3 bg-red-50 rounded-lg border border-red-200 flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-red-700">{submitError}</p>
+        <div className="mx-4 mb-4 p-3 bg-danger-soft rounded-lg border border-danger/20 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-danger flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-danger-text">{submitError}</p>
         </div>
       )}
 
       {/* Navigation buttons — fixed above the global bottom tab bar (h-16) */}
-      <div className="fixed bottom-16 left-0 right-0 z-50 bg-white border-t border-gray-200 p-4 flex gap-3 safe-area-inset-bottom">
+      <div className="fixed bottom-16 left-0 right-0 z-50 bg-surface border-t border-border p-4 flex gap-3 safe-area-inset-bottom">
         <Button
           type="button"
           variant="outline"
