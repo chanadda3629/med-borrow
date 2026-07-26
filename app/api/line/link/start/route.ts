@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { createLineLinkToken } from "@/lib/integrations/line/link-token"
 
+// Intentionally unauthenticated: the patient's phone opens this URL after scanning
+// the QR that staff show, so there is no staff session to check. The security of the
+// link rests on the single-use, 30-minute nonce and on LINE verifying the id_token
+// against it. Residual risk: anyone who learns a patientId can mint a link token and
+// bind their own LINE account to that patient. Closing that means putting a
+// staff-minted opaque token in the QR instead of the raw patientId.
 export async function GET(request: NextRequest) {
   const patientId = request.nextUrl.searchParams.get("patientId")
   if (!patientId) {
