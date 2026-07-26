@@ -33,7 +33,11 @@ function QrConnect({ patientId }: { patientId: string }) {
   const [dataUrl, setDataUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    const url = `${window.location.origin}/api/line/link/start?patientId=${patientId}`
+    // The QR is scanned on the patient's phone, so it must point at a publicly
+    // reachable host. window.location.origin is http://localhost:3000 in dev,
+    // which the phone cannot open — NEXT_PUBLIC_APP_URL overrides it.
+    const origin = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+    const url = `${origin.replace(/\/$/, "")}/api/line/link/start?patientId=${patientId}`
     QRCode.toDataURL(url, { width: 220, margin: 1 })
       .then(setDataUrl)
       .catch(() => setDataUrl(null))
@@ -106,7 +110,12 @@ export function LineChatPanel({ conversation, onClose }: LineChatPanelProps) {
               <StatusBadge status={request.workflowStatus} />
               {request.dueOrReturnDate && request.daysRemaining !== null && (
                 <span>
-                  กำหนด {new Date(request.dueOrReturnDate).toLocaleDateString("th-TH")} (อีก {request.daysRemaining} วัน)
+                  กำหนด {new Date(request.dueOrReturnDate).toLocaleDateString("th-TH")}{" "}
+                  {request.daysRemaining < 0
+                    ? `(เกินกำหนด ${Math.abs(request.daysRemaining)} วัน)`
+                    : request.daysRemaining === 0
+                      ? "(ครบกำหนดวันนี้)"
+                      : `(อีก ${request.daysRemaining} วัน)`}
                 </span>
               )}
             </div>

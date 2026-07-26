@@ -24,9 +24,11 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
 
   if (!open) return null
 
+  // z-[60] keeps the sheet above the fixed BottomTabBar (z-50). At equal z the nav
+  // won on DOM order and painted over the sheet footer, hiding its action buttons.
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center animate-[overlay-in_0.15s_ease-out]"
+      className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 sm:items-center animate-[overlay-in_0.15s_ease-out]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}

@@ -1,4 +1,5 @@
 import { db } from "@/lib/db"
+import { toThaiEquipmentType } from "@/lib/domain/labels"
 import { sendLinePushMessage } from "./line-client"
 
 export type Trigger =
@@ -51,7 +52,11 @@ export async function sendLineNotification(requestId: string, trigger: Trigger):
 
   const message = TEMPLATES[trigger]({
     name: request.patient.fullName,
-    equipmentType: request.assignedEquipmentItem?.equipmentType ?? request.requestedEquipmentType,
+    // Stored values can be legacy English codes ("wheelchair", "bed"); patient-facing
+    // messages must never leak them.
+    equipmentType: toThaiEquipmentType(
+      request.assignedEquipmentItem?.equipmentType ?? request.requestedEquipmentType,
+    ),
     dueOrReturnDate: request.dueOrReturnDate,
     deliveryContactPhone: request.deliveryContactPhone,
   })
