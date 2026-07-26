@@ -8,11 +8,7 @@ export default auth((req) => {
   const { nextUrl } = req
   const isLoggedIn = !!req.auth
   const isAuthPage = nextUrl.pathname === "/login"
-  const isApiAuth = nextUrl.pathname.startsWith("/api/auth")
-  const isLineWebhook = nextUrl.pathname.startsWith("/api/line/")
-  const isStatic = /\.(json|png|ico|svg|jpg|webp)$/.test(nextUrl.pathname)
 
-  if (isApiAuth || isLineWebhook || isStatic) return NextResponse.next()
   if (!isLoggedIn && !isAuthPage) {
     return NextResponse.redirect(new URL("/login", nextUrl))
   }
@@ -22,7 +18,12 @@ export default auth((req) => {
   return NextResponse.next()
 })
 
+// Excluded at the matcher rather than inside the handler, so these paths never
+// invoke the middleware at all. Auth routes, the LINE webhook, every /_next
+// asset (including RSC prefetch chunks) and public static files are skipped;
+// page and RSC navigations still pass through for the auth gate.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!api/auth|api/line|_next|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|avif|json|webmanifest|txt|xml|js|css|woff|woff2|ttf)$).*)",
+  ],
 }
-

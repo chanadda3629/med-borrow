@@ -140,3 +140,11 @@ export const LINE_NOTIFICATION_TRIGGERS = [
 
 export const RETURN_CONDITIONS = ["ใช้งานได้", "ชำรุด"] as const;
 
+
+/**
+ * Row cap for the request and inventory list screens. Unbounded findMany calls
+ * are the failure mode these lists degrade into as the dataset grows: every row
+ * is serialised into the RSC payload and paid for on every navigation. Staff
+ * narrow by filter or search rather than scrolling past this many rows.
+ */
+export const LIST_PAGE_SIZE = 50;

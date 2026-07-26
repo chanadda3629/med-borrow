@@ -103,6 +103,40 @@ body {
   to { transform: translateY(0); opacity: 1; }
 }
 
+/* =========================================================================
+   Skeleton — loading placeholders. A light sweep across a hairline block, so
+   the shape reads as "content arriving" rather than as a real surface.
+   ========================================================================= */
+@keyframes skeleton-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-hairline);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.65),
+    transparent
+  );
+  animation: skeleton-sweep 1.4s var(--ease-apple) infinite;
+}
+/* The global reduced-motion rule freezes the sweep mid-track; hide it instead
+   so the block stays a clean static placeholder. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    display: none;
+  }
+}
+
 /* Reduced motion — keep opacity fades, drop transforms/scale. DESIGN.md §7 */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

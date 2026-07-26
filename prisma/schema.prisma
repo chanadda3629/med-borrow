@@ -107,6 +107,8 @@ model EquipmentItem {
 
   @@index([equipmentType])
   @@index([currentStatus])
+  // Inventory list filters on both at once; also backs the reports groupBy.
+  @@index([equipmentType, currentStatus])
 }
 
 model EquipmentItemStatusHistory {
@@ -156,6 +158,12 @@ model BorrowingRequest {
   @@index([patientId, workflowStatus])
   @@index([assignedEquipmentItemId])
   @@index([requestedEquipmentType])
+  // Request list: filter by workflowStatus, order by createdAt.
+  @@index([workflowStatus, createdAt])
+  // Request list with no status filter — ordering alone.
+  @@index([createdAt])
+  // Dashboard due-soon list and overdue count.
+  @@index([workflowStatus, dueOrReturnDate])
 }
 
 model BorrowingRequestStatusHistory {

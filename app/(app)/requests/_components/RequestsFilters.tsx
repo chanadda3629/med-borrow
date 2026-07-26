@@ -1,65 +1,32 @@
 "use client"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useState } from "react"
-import { Search, X, ChevronDown } from "lucide-react"
+import { Search, X, ChevronDown, Loader2 } from "lucide-react"
+import { useFilterParams } from "@/lib/hooks/use-filter-params"
 import { cn } from "@/lib/utils"
 
 interface RequestsFiltersProps {
   workflowStatuses: string[]
-  currentStatus?: string
-  currentQ?: string
-  currentSort?: string
 }
 
-export function RequestsFilters({
-  workflowStatuses,
-  currentStatus,
-  currentQ,
-  currentSort,
-}: RequestsFiltersProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [query, setQuery] = useState(currentQ ?? "")
+export function RequestsFilters({ workflowStatuses }: RequestsFiltersProps) {
+  const { get, query, setSearch, clearSearch, setParam, toggleParam, pending } =
+    useFilterParams("/requests")
 
-  const setParam = useCallback(
-    (key: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (value && value !== "all") {
-        params.set(key, value)
-      } else {
-        params.delete(key)
-      }
-      router.push(`/requests?${params.toString()}`)
-    },
-    [router, searchParams],
-  )
-
-  const toggleParam = useCallback(
-    (key: string, value: string) => {
-      setParam(key, searchParams.get(key) === value ? "all" : value)
-    },
-    [searchParams, setParam],
-  )
-
-  const handleSearch = (val: string) => {
-    setQuery(val)
-    setParam("q", val)
-  }
-
-  const clearSearch = () => {
-    setQuery("")
-    setParam("q", "")
-  }
+  const currentStatus = get("status")
+  const currentSort = get("sort")
 
   return (
     <div className="space-y-3">
       {/* Search pill */}
       <div className="flex items-center gap-2">
         <div className="flex h-12 flex-1 items-center gap-2 rounded-full border border-border bg-surface px-4 transition-all duration-150 ease-apple focus-within:border-accent-500 focus-within:ring-[3px] focus-within:ring-accent-500/15">
-          <Search className="h-5 w-5 shrink-0 text-faint" />
+          {pending ? (
+            <Loader2 className="h-5 w-5 shrink-0 animate-spin text-accent-500" />
+          ) : (
+            <Search className="h-5 w-5 shrink-0 text-faint" />
+          )}
           <input
             value={query}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="ค้นหาชื่อผู้ป่วย..."
             className="w-full bg-transparent text-base placeholder:text-faint focus:outline-none"
           />
