@@ -1,11 +1,15 @@
 "use server"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { sendLineNotification, type Trigger } from "@/lib/integrations/line/notification-service"
 
 export async function sendQuickReply(requestId: string, trigger: Trigger, dueOrReturnDate?: Date) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     if (dueOrReturnDate) {
       await db.borrowingRequest.update({ where: { id: requestId }, data: { dueOrReturnDate } })
     }

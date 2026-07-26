@@ -1,5 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { canTransitionBorrowWorkflowStatus } from "@/lib/domain/transitions"
@@ -18,6 +19,9 @@ const TRIGGER_MAP: Record<string, LineNotificationTrigger> = {
 
 export async function advanceWorkflow(requestId: string, toStatus: string) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     const parsed = borrowWorkflowStatusSchema.safeParse(toStatus)
     if (!parsed.success) return err("สถานะไม่ถูกต้อง")
 

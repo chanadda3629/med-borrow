@@ -1,5 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { canAssignEquipmentItem } from "@/lib/domain/transitions"
@@ -12,6 +13,9 @@ export async function approveRequest(
   input: { equipmentItemId: string; approverName: string },
 ) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     const parsed = approveRequestSchema.safeParse(input)
     if (!parsed.success) return err("กรุณากรอกข้อมูลให้ครบถ้วน")
     const { equipmentItemId, approverName } = parsed.data

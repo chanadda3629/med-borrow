@@ -1,5 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { returnDataSchema } from "@/lib/domain/schemas"
@@ -21,6 +22,9 @@ interface ReturnInput {
 
 export async function processReturn(input: ReturnInput) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     returnDataSchema.parse({
       returnDate: new Date(input.returnDate),
       receivingStaffName: input.receivingStaffName,

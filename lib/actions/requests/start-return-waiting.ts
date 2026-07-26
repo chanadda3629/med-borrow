@@ -1,5 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { canTransitionBorrowWorkflowStatus } from "@/lib/domain/transitions"
@@ -18,6 +19,9 @@ interface StartReturnWaitingInput {
 // return state.
 export async function startReturnWaiting(requestId: string, input: StartReturnWaitingInput) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     const parsed = startReturnWaitingSchema.safeParse(input)
     if (!parsed.success) return err("กรุณากรอกข้อมูลการยืมให้ครบถ้วน")
     const { receivedDate, receiverName, delivererName, loanDetail } = parsed.data

@@ -10,12 +10,14 @@ export async function sendChatMessage(patientId: string, body: string) {
   if (!trimmed) return err("กรุณากรอกข้อความ")
 
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     const patient = await db.patient.findUnique({ where: { id: patientId }, select: { lineUserId: true } })
     if (!patient) return err("ไม่พบผู้ป่วย")
     if (!patient.lineUserId) return err("ยังไม่ได้เชื่อมต่อ LINE")
 
-    const session = await auth()
-    const staffUserId = session?.user?.id
+    const staffUserId = session.user.id
 
     try {
       await sendLinePushMessage(patient.lineUserId, trimmed)

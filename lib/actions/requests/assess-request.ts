@@ -1,5 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { canTransitionBorrowWorkflowStatus } from "@/lib/domain/transitions"
@@ -12,6 +13,9 @@ import type { Prisma } from "@prisma/client"
 // with quantities. Saving the assessment advances the request to "AI แนะนำอุปกรณ์".
 export async function assessRequest(requestId: string, input: unknown) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     const parsed = assessmentFormSchema.safeParse(input)
     if (!parsed.success) {
       return err(parsed.error.issues[0]?.message ?? "ข้อมูลไม่ถูกต้อง")

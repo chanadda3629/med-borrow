@@ -1,5 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { canTransitionBorrowWorkflowStatus } from "@/lib/domain/transitions"
@@ -18,6 +19,9 @@ interface PrepareDeliveryInput {
 // for the already-approved/assigned item.
 export async function prepareDelivery(requestId: string, input: PrepareDeliveryInput) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     const parsed = prepareDeliverySchema.safeParse(input)
     if (!parsed.success) return err("กรุณากรอกข้อมูลการจัดส่งให้ครบถ้วน")
     const { requestDetail, deliveryDate, dueDate, delivererName, deliveryContactPhone } = parsed.data

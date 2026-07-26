@@ -1,4 +1,5 @@
 "use server"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 
@@ -13,6 +14,9 @@ interface CreateItemInput {
 
 export async function createEquipmentItem(input: CreateItemInput) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     const donorName = input.donorName?.trim()
     const condition = input.condition === "ชำรุด" ? "ชำรุด" : "ดี"
     const item = await db.equipmentItem.create({

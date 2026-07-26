@@ -1,5 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 import { toThaiWorkflowStatus } from "@/lib/domain/labels"
@@ -17,6 +18,9 @@ const REVERTIBLE_PREVIOUS: Record<string, string> = {
 // mis-step). Records the reversal in the status-history table.
 export async function revertWorkflow(requestId: string) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     const request = await db.borrowingRequest.findUnique({ where: { id: requestId } })
     if (!request) return err("ไม่พบคำร้อง")
 

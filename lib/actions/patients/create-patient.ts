@@ -1,5 +1,6 @@
 "use server"
 import { revalidatePath } from "next/cache"
+import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { ok, err } from "@/lib/actions/result"
 
@@ -34,6 +35,9 @@ interface CreatePatientInput {
 
 export async function createPatient(input: CreatePatientInput) {
   try {
+    const session = await auth()
+    if (!session?.user) return err("ไม่ได้รับอนุญาต")
+
     const requestNumber = "REQ-" + Date.now()
     const result = await db.$transaction(async (tx) => {
       // A patient may borrow more than once over time, so nationalId (unique)
