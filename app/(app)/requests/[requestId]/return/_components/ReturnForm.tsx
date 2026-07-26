@@ -91,7 +91,7 @@ export function ReturnForm({ requestId, maxDate }: ReturnFormProps) {
       <div className="space-y-1.5">
         <Label>
           รูปภาพสภาพอุปกรณ์{" "}
-          <span className="text-xs font-normal text-gray-500">(อย่างน้อย 1 รูป สูงสุด 3 รูป)</span>
+          <span className="text-xs font-normal text-muted">(อย่างน้อย 1 รูป สูงสุด 3 รูป)</span>
         </Label>
         <PhotoGalleryUploadField
           value={photos}
@@ -110,10 +110,10 @@ export function ReturnForm({ requestId, maxDate }: ReturnFormProps) {
               value="ใช้งานได้"
               checked={condition === "ใช้งานได้"}
               onChange={() => { setCondition("ใช้งานได้"); setDamageNote("") }}
-              className="accent-green-600"
+              className="accent-success"
               disabled={loading}
             />
-            <span className="text-sm font-medium text-green-700">ใช้งานได้</span>
+            <span className="text-sm font-medium text-success-text">ใช้งานได้</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -122,10 +122,10 @@ export function ReturnForm({ requestId, maxDate }: ReturnFormProps) {
               value="ชำรุด"
               checked={condition === "ชำรุด"}
               onChange={() => setCondition("ชำรุด")}
-              className="accent-red-600"
+              className="accent-danger"
               disabled={loading}
             />
-            <span className="text-sm font-medium text-red-700">ชำรุด</span>
+            <span className="text-sm font-medium text-danger-text">ชำรุด</span>
           </label>
         </div>
       </div>
@@ -133,7 +133,7 @@ export function ReturnForm({ requestId, maxDate }: ReturnFormProps) {
       {condition === "ชำรุด" && (
         <div className="space-y-1.5">
           <Label htmlFor="damageNote">
-            รายละเอียดความเสียหาย <span className="text-red-500">*</span>
+            รายละเอียดความเสียหาย <span className="text-danger">*</span>
           </Label>
           <Textarea
             id="damageNote"
@@ -147,7 +147,7 @@ export function ReturnForm({ requestId, maxDate }: ReturnFormProps) {
       )}
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+        <p className="text-sm text-danger-text bg-danger-soft border border-danger rounded-md px-3 py-2">
           {error}
         </p>
       )}

@@ -96,7 +96,7 @@ export function ApproveRequestForm({ requestId, availableItems }: ApproveRequest
           label="อนุมัติ"
           active={decision === "อนุมัติ"}
           disabled={!hasItems}
-          activeClass="border-green-500 bg-green-50 text-green-700"
+          activeClass="border-success bg-success-soft text-success-text"
           onClick={() => {
             setDecision("อนุมัติ")
             setError(null)
@@ -105,7 +105,7 @@ export function ApproveRequestForm({ requestId, availableItems }: ApproveRequest
         <DecisionOption
           label="ไม่อนุมัติ"
           active={decision === "ไม่อนุมัติ"}
-          activeClass="border-red-500 bg-red-50 text-red-700"
+          activeClass="border-danger bg-danger-soft text-danger-text"
           onClick={() => {
             setDecision("ไม่อนุมัติ")
             setError(null)
@@ -114,7 +114,7 @@ export function ApproveRequestForm({ requestId, availableItems }: ApproveRequest
       </div>
 
       {!hasItems && (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted">
           ไม่มีอุปกรณ์ประเภทที่ขอที่พร้อมใช้งาน จึงไม่สามารถอนุมัติได้
           กรุณาระบุสาเหตุการไม่อนุมัติด้านล่าง
         </p>
@@ -127,10 +127,10 @@ export function ApproveRequestForm({ requestId, availableItems }: ApproveRequest
             {availableItems.map((item) => (
               <label
                 key={item.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 p-3 rounded-md border-2 cursor-pointer transition-all duration-150 ease-apple ${
                   selectedItemId === item.id
-                    ? "border-blue-500 bg-blue-50"
-                    : "border-gray-200 hover:border-gray-300"
+                    ? "border-accent-500 bg-accent-50"
+                    : "border-border hover:border-faint"
                 }`}
               >
                 <input
@@ -142,11 +142,11 @@ export function ApproveRequestForm({ requestId, availableItems }: ApproveRequest
                     setSelectedItemId(e.target.value)
                     setError(null)
                   }}
-                  className="accent-blue-600"
+                  className="accent-accent-500"
                 />
                 <div>
                   <div className="font-medium text-sm">{item.assetNumber}</div>
-                  <div className="text-xs text-gray-500">รหัส: {item.equipmentCode}</div>
+                  <div className="text-xs text-muted">รหัส: {item.equipmentCode}</div>
                 </div>
               </label>
             ))}
@@ -163,7 +163,7 @@ export function ApproveRequestForm({ requestId, availableItems }: ApproveRequest
                     onChange={() => toggleCheck(index)}
                     className="mt-0.5"
                   />
-                  <span className="text-sm text-gray-700">{text}</span>
+                  <span className="text-sm text-foreground">{text}</span>
                 </label>
               ))}
             </div>
@@ -204,7 +204,7 @@ export function ApproveRequestForm({ requestId, availableItems }: ApproveRequest
       )}
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+        <p className="text-sm text-danger-text bg-danger-soft border border-danger rounded-md px-3 py-2">
           {error}
         </p>
       )}
@@ -257,8 +257,8 @@ function DecisionOption({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`rounded-lg border-2 px-3 py-2.5 text-sm font-medium transition-colors ${
-        active ? activeClass : "border-gray-200 text-gray-600 hover:border-gray-300"
+      className={`rounded-md border-2 px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-apple ${
+        active ? activeClass : "border-border text-muted hover:border-faint"
       } ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
     >
       {label}

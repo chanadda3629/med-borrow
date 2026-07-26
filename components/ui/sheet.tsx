@@ -26,24 +26,24 @@ export function Sheet({ open, onClose, title, children, className }: SheetProps)
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center animate-[overlay-in_0.15s_ease-out]"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-[4px] sm:items-center animate-[overlay-in_0.15s_ease-out]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
     >
       <div
         className={cn(
-          "flex w-full flex-col bg-white sm:w-[420px] sm:max-h-[85vh] sm:rounded-3xl max-h-[90vh] rounded-t-3xl shadow-xl animate-[sheet-in_0.32s_cubic-bezier(0.34,1.56,0.64,1)]",
+          "flex w-full flex-col bg-surface sm:w-[420px] sm:max-h-[85vh] sm:rounded-xl max-h-[90vh] rounded-t-[24px] shadow-xl animate-[sheet-in_0.35s_var(--ease-apple)]",
           className
         )}
       >
-        <div className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-gray-200 sm:hidden" />
-        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-100">
+        <div className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-border sm:hidden" />
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-hairline">
           <div className="min-w-0 flex-1">{title}</div>
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="shrink-0 rounded-full p-1.5 text-faint hover:bg-hairline hover:text-foreground"
             aria-label="ปิด"
           >
             <X className="h-5 w-5" />

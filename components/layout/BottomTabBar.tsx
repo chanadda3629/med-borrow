@@ -3,10 +3,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
-  FilePlus,
-  ClipboardCheck,
+  ClipboardList,
   Package,
-  PackagePlus,
   BarChart3,
   type LucideIcon,
 } from "lucide-react"
@@ -14,17 +12,17 @@ import { cn } from "@/lib/utils"
 
 type Tab = { href: string; label: string; Icon: LucideIcon }
 
+// Four top-level sections only (DESIGN.md §8). Create actions ("รับคำร้อง",
+// "เพิ่มอุปกรณ์") live as primary buttons inside their section, not as tabs.
 const TABS: Tab[] = [
   { href: "/dashboard", label: "หน้าหลัก", Icon: LayoutDashboard },
-  { href: "/requests/new", label: "รับคำร้อง", Icon: FilePlus },
-  { href: "/requests", label: "ประเมิน", Icon: ClipboardCheck },
+  { href: "/requests", label: "คำร้อง", Icon: ClipboardList },
   { href: "/inventory", label: "คลังอุปกรณ์", Icon: Package },
-  { href: "/inventory/new", label: "เพิ่มอุปกรณ์", Icon: PackagePlus },
   { href: "/reports", label: "รายงาน", Icon: BarChart3 },
 ]
 
-// Pick the most specific tab whose href matches the current path, so that
-// e.g. /requests/new highlights "รับคำร้อง" rather than "ประเมิน".
+// Pick the most specific tab whose href matches the current path, so nested
+// routes (e.g. /requests/new, /requests/[id]) keep "คำร้อง" highlighted.
 function activeHref(pathname: string): string | null {
   let best: string | null = null
   for (const { href } of TABS) {
@@ -41,7 +39,7 @@ export function BottomTabBar() {
 
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-50 px-3">
-      <div className="pointer-events-auto mx-auto mb-[calc(0.5rem+env(safe-area-inset-bottom))] flex w-full max-w-md items-stretch justify-between gap-0.5 rounded-[26px] border border-black/5 bg-white/85 px-1.5 py-1.5 shadow-[0_10px_30px_-6px_rgba(15,23,42,0.25)] backdrop-blur-xl">
+      <div className="glass pointer-events-auto mx-auto mb-[calc(0.5rem+env(safe-area-inset-bottom))] flex w-full max-w-md items-stretch justify-between gap-1 rounded-full border border-black/[0.06] px-2 py-2 shadow-lg">
         {TABS.map(({ href, label, Icon }) => {
           const active = current === href
           return (
@@ -49,22 +47,19 @@ export function BottomTabBar() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className="group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1 transition-transform active:scale-95"
+              className="group relative flex flex-1 flex-col items-center justify-center gap-1 rounded-full py-1 transition-transform duration-150 ease-apple active:scale-95 focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-500/15"
             >
-              <span
+              <Icon
                 className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200",
-                  active
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                    : "text-gray-400 group-hover:text-gray-600 group-active:bg-gray-100"
+                  "h-6 w-6 transition-colors",
+                  active ? "text-accent-500" : "text-muted group-hover:text-foreground",
                 )}
-              >
-                <Icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.2 : 1.8} />
-              </span>
+                strokeWidth={active ? 2 : 1.75}
+              />
               <span
                 className={cn(
-                  "max-w-full truncate text-[9px] leading-none tracking-tight transition-colors",
-                  active ? "font-semibold text-blue-600" : "text-gray-400"
+                  "max-w-full truncate text-[10px] leading-none tracking-tight transition-colors",
+                  active ? "font-semibold text-accent-500" : "text-muted",
                 )}
               >
                 {label}

@@ -83,7 +83,7 @@ function WheelColumn({
           onClick={() => onChange(item.value)}
           className={cn(
             "flex items-center justify-center select-none cursor-pointer transition-all duration-150",
-            item.value === value ? "text-gray-900 font-semibold text-[17px]" : "text-gray-400 text-[15px]"
+            item.value === value ? "text-foreground font-semibold text-[17px]" : "text-faint text-[15px]"
           )}
           style={{ height: WHEEL_ITEM_HEIGHT, scrollSnapAlign: "center" }}
         >
@@ -290,12 +290,12 @@ export function DatePicker({
         id={id}
         onClick={handleToggleOpen}
         className={cn(
-          "w-full h-12 px-3 border rounded-lg text-base bg-white flex items-center gap-2 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-          hasError ? "border-red-400" : "border-gray-300",
-          !selected && "text-gray-400"
+          "w-full h-11 px-3.5 border rounded-md text-base bg-surface flex items-center gap-2 text-left transition-all duration-150 focus:outline-none focus:border-accent-500 focus:ring-[3px] focus:ring-accent-500/15",
+          hasError ? "border-danger" : "border-border",
+          !selected && "text-faint"
         )}
       >
-        <CalendarDays className="w-4 h-4 text-gray-400 shrink-0" />
+        <CalendarDays className="w-4 h-4 text-faint shrink-0" />
         <span className="truncate">{selected ? formatThaiDisplay(selected) : placeholder}</span>
       </button>
 
@@ -306,20 +306,20 @@ export function DatePicker({
             if (e.target === e.currentTarget) handleClose()
           }}
         >
-          <div className="w-full sm:w-[340px] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl p-4 pb-6 sm:pb-4 overflow-hidden">
+          <div className="w-full sm:w-[340px] bg-surface rounded-t-[24px] sm:rounded-xl shadow-2xl p-4 pb-6 sm:pb-4 overflow-hidden">
             {wheelOpen ? (
               <div className="flex flex-col">
-                <div className="text-center text-sm font-medium text-gray-400 pb-2">
+                <div className="text-center text-sm font-medium text-faint pb-2">
                   เลือกเดือนและปี
                 </div>
 
                 <div className="relative">
                   <div
-                    className="pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 rounded-xl border-y border-blue-100 bg-blue-50/60"
+                    className="pointer-events-none absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 rounded-md border-y border-accent-100 bg-accent-50/60"
                     style={{ height: WHEEL_ITEM_HEIGHT }}
                   />
-                  <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-12 bg-gradient-to-b from-white to-transparent" />
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-12 bg-gradient-to-t from-white to-transparent" />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-12 bg-gradient-to-b from-surface to-transparent" />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-12 bg-gradient-to-t from-surface to-transparent" />
 
                   <div className="relative z-[1] flex">
                     <WheelColumn
@@ -337,18 +337,18 @@ export function DatePicker({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-hairline">
                   <button
                     type="button"
                     onClick={() => setWheelOpen(false)}
-                    className="text-sm font-medium text-gray-500 px-3 py-2 rounded-lg hover:bg-gray-50 hover:text-gray-700"
+                    className="text-sm font-medium text-muted px-3 py-2 rounded-lg hover:bg-canvas hover:text-foreground"
                   >
                     ยกเลิก
                   </button>
                   <button
                     type="button"
                     onClick={handleConfirmWheel}
-                    className="text-sm font-semibold text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-50"
+                    className="text-sm font-semibold text-accent-600 px-3 py-2 rounded-lg hover:bg-accent-50"
                   >
                     ตกลง
                   </button>
@@ -360,7 +360,7 @@ export function DatePicker({
                   <button
                     type="button"
                     onClick={goPrevMonth}
-                    className="h-9 w-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
+                    className="h-9 w-9 flex items-center justify-center rounded-full text-muted hover:bg-hairline"
                     aria-label="เดือนก่อนหน้า"
                   >
                     <ChevronLeft className="w-5 h-5" />
@@ -369,16 +369,16 @@ export function DatePicker({
                   <button
                     type="button"
                     onClick={handleOpenWheel}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-base font-semibold text-gray-900 hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full text-base font-semibold text-foreground hover:bg-hairline active:bg-hairline transition-colors"
                   >
                     {THAI_MONTHS[viewMonth]} {viewYear + 543}
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                    <ChevronDown className="w-4 h-4 text-faint" />
                   </button>
 
                   <button
                     type="button"
                     onClick={goNextMonth}
-                    className="h-9 w-9 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100"
+                    className="h-9 w-9 flex items-center justify-center rounded-full text-muted hover:bg-hairline"
                     aria-label="เดือนถัดไป"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -387,7 +387,7 @@ export function DatePicker({
 
                 <div className="grid grid-cols-7">
                   {THAI_WEEKDAYS.map((d) => (
-                    <div key={d} className="h-8 flex items-center justify-center text-xs font-medium text-gray-400">
+                    <div key={d} className="h-8 flex items-center justify-center text-xs font-medium text-faint">
                       {d}
                     </div>
                   ))}
@@ -406,12 +406,12 @@ export function DatePicker({
                           onClick={() => handleSelectDay(cell)}
                           className={cn(
                             "h-9 w-9 flex items-center justify-center rounded-full text-sm transition-colors",
-                            !cell.isCurrentMonth && "text-gray-300",
-                            cell.isCurrentMonth && !disabled && "text-gray-700",
-                            !disabled && !sel && "hover:bg-gray-100",
-                            disabled && "text-gray-200 cursor-not-allowed",
-                            isToday && !sel && "ring-1 ring-inset ring-blue-400 text-blue-600 font-semibold",
-                            sel && "bg-blue-600 text-white font-semibold"
+                            !cell.isCurrentMonth && "text-faint",
+                            cell.isCurrentMonth && !disabled && "text-foreground",
+                            !disabled && !sel && "hover:bg-hairline",
+                            disabled && "text-hairline cursor-not-allowed",
+                            isToday && !sel && "ring-1 ring-inset ring-accent-400 text-accent-600 font-semibold",
+                            sel && "bg-accent-500 text-white font-semibold"
                           )}
                         >
                           {cell.day}
@@ -421,11 +421,11 @@ export function DatePicker({
                   })}
                 </div>
 
-                <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-hairline">
                   <button
                     type="button"
                     onClick={handleClear}
-                    className="text-sm font-medium text-gray-500 px-2 py-1.5 rounded-lg hover:bg-gray-50 hover:text-gray-700"
+                    className="text-sm font-medium text-muted px-2 py-1.5 rounded-lg hover:bg-canvas hover:text-foreground"
                   >
                     ล้าง
                   </button>
@@ -435,7 +435,7 @@ export function DatePicker({
                       setViewYear(today.year)
                       setViewMonth(today.month)
                     }}
-                    className="text-sm font-medium text-blue-600 px-2 py-1.5 rounded-lg hover:bg-blue-50"
+                    className="text-sm font-medium text-accent-600 px-2 py-1.5 rounded-lg hover:bg-accent-50"
                   >
                     วันนี้
                   </button>

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { PackageSearch } from "lucide-react"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { EQUIPMENT_TYPES, EQUIPMENT_STATUSES } from "@/lib/domain/constants"
@@ -89,7 +90,10 @@ export default async function InventoryPage({ searchParams }: PageProps) {
         />
 
         {rows.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">ไม่พบรายการอุปกรณ์</div>
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <PackageSearch className="h-10 w-10 text-faint" strokeWidth={1.75} />
+            <p className="text-sm text-muted">ไม่พบรายการอุปกรณ์</p>
+          </div>
         ) : (
           <InventoryTable rows={rows} />
         )}

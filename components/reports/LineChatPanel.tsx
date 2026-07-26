@@ -41,7 +41,7 @@ function QrConnect({ patientId }: { patientId: string }) {
 
   if (!dataUrl) {
     return (
-      <div className="flex h-[220px] w-[220px] items-center justify-center text-sm text-gray-400">
+      <div className="flex h-[220px] w-[220px] items-center justify-center text-sm text-faint">
         กำลังสร้าง QR...
       </div>
     )
@@ -100,9 +100,9 @@ export function LineChatPanel({ conversation, onClose }: LineChatPanelProps) {
       className="sm:h-[600px]"
       title={
         <div className="min-w-0">
-          <p className="truncate font-semibold text-gray-900">{conversation.fullName}</p>
+          <p className="truncate font-semibold text-foreground">{conversation.fullName}</p>
           {request && (
-            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted">
               <StatusBadge status={request.workflowStatus} />
               {request.dueOrReturnDate && request.daysRemaining !== null && (
                 <span>
@@ -117,19 +117,19 @@ export function LineChatPanel({ conversation, onClose }: LineChatPanelProps) {
       <div className="flex h-full flex-col">
         <div ref={scrollRef} className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
           {conversation.timeline.length === 0 && (
-            <p className="text-center text-sm text-gray-400">ยังไม่มีข้อความ</p>
+            <p className="text-center text-sm text-faint">ยังไม่มีข้อความ</p>
           )}
           {conversation.timeline.map((entry) => (
             <div key={entry.id} className={cn("flex", entry.direction === "outbound" ? "justify-end" : "justify-start")}>
               <div
                 className={cn(
                   "max-w-[80%] rounded-2xl px-3 py-2 text-sm",
-                  entry.direction === "outbound" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-800",
-                  entry.deliveryStatus === "failed" && "bg-red-100 text-red-700"
+                  entry.direction === "outbound" ? "bg-accent-500 text-white" : "bg-surface-2 text-foreground border border-hairline",
+                  entry.deliveryStatus === "failed" && "bg-danger-soft text-danger-text border-transparent"
                 )}
               >
                 <p className="whitespace-pre-wrap">{entry.body}</p>
-                <p className={cn("mt-1 text-[10px]", entry.direction === "outbound" ? "text-blue-100" : "text-gray-400")}>
+                <p className={cn("mt-1 text-[10px]", entry.direction === "outbound" ? "text-accent-100" : "text-faint")}>
                   {formatDateTime(entry.createdAt)}
                   {entry.deliveryStatus === "failed" && " · ส่งไม่สำเร็จ"}
                 </p>
@@ -138,16 +138,16 @@ export function LineChatPanel({ conversation, onClose }: LineChatPanelProps) {
           ))}
         </div>
 
-        {error && <p className="px-4 pb-1 text-xs text-red-600">{error}</p>}
+        {error && <p className="px-4 pb-1 text-xs text-danger">{error}</p>}
 
-        <div className="space-y-2 border-t border-gray-100 p-3">
+        <div className="space-y-2 border-t border-hairline p-3">
           {!conversation.linked ? (
             <div className="space-y-2 text-center">
-              <p className="text-sm text-gray-600">ผู้ป่วยยังไม่ได้เชื่อมต่อ LINE</p>
+              <p className="text-sm text-muted">ผู้ป่วยยังไม่ได้เชื่อมต่อ LINE</p>
               {showQr ? (
                 <div className="flex flex-col items-center gap-2">
                   <QrConnect patientId={conversation.patientId} />
-                  <p className="text-xs text-gray-400">ให้ผู้ป่วย/ญาติสแกนด้วยมือถือเพื่อเพิ่มเพื่อน LINE</p>
+                  <p className="text-xs text-faint">ให้ผู้ป่วย/ญาติสแกนด้วยมือถือเพื่อเพิ่มเพื่อน LINE</p>
                 </div>
               ) : (
                 <Button type="button" onClick={() => setShowQr(true)}>

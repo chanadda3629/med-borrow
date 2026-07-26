@@ -1,45 +1,116 @@
 
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* =========================================================================
+   Design tokens — see DESIGN.md. Tailwind v4 CSS-first config.
+   Light theme only (Phase 1). Utilities generated: bg-canvas, text-muted,
+   bg-accent-500, text-success-text, rounded-lg, shadow-md, ease-apple, ...
+   ========================================================================= */
+@theme {
+  /* neutrals (Apple cool) */
+  --color-canvas: #f5f5f7;
+  --color-surface: #ffffff;
+  --color-surface-2: #fbfbfd;
+  --color-foreground: #1d1d1f;
+  --color-muted: #6e6e73;
+  --color-faint: #a1a1a6;
+  --color-border: #d2d2d7;
+  --color-hairline: #e8e8ed;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* accent — trust blue-teal */
+  --color-accent-50: #eaf6fa;
+  --color-accent-100: #d0eaf2;
+  --color-accent-200: #a6d7e6;
+  --color-accent-300: #6fbbd3;
+  --color-accent-400: #3699bc;
+  --color-accent-500: #0a7ea4;
+  --color-accent-600: #086a8c;
+  --color-accent-700: #075670;
+  --color-accent-800: #084457;
+  --color-accent-900: #0a3846;
+
+  /* semantic — solid / soft / text */
+  --color-success: #1c8e5a;
+  --color-success-soft: #e6f5ec;
+  --color-success-text: #12703f;
+  --color-warning: #c77a0a;
+  --color-warning-soft: #fdf1dd;
+  --color-warning-text: #8a5406;
+  --color-danger: #c9362b;
+  --color-danger-soft: #fbe9e7;
+  --color-danger-text: #98261d;
+  --color-info: #5b5bd6;
+  --color-info-soft: #ececfb;
+  --color-info-text: #3a3a9e;
+
+  /* radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  /* elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.1), 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.16);
+
+  /* motion */
+  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* fonts (unchanged) */
   --font-sans: var(--font-ibm-plex-thai);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-canvas);
+  color: var(--color-foreground);
   font-family: var(--font-ibm-plex-thai), "IBM Plex Sans Thai", sans-serif;
 }
 
+/* =========================================================================
+   Glass — floating layers only (nav, top bar, overlays). See DESIGN.md §3.
+   ========================================================================= */
+.glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: rgba(255, 255, 255, 0.96);
+  }
+}
+
+/* =========================================================================
+   Motion keyframes
+   ========================================================================= */
 @keyframes overlay-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-
 @keyframes sheet-in {
   from { transform: translateY(24px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
-
 @keyframes pop-in {
-  0% { transform: scale(0.5); opacity: 0; }
-  70% { transform: scale(1.15); }
+  0% { transform: scale(0.96); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
+}
+@keyframes toast-in {
+  from { transform: translateY(-16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Reduced motion — keep opacity fades, drop transforms/scale. DESIGN.md §7 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 .no-scrollbar {

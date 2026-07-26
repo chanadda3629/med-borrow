@@ -6,8 +6,11 @@ interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Progress({ value, className }: ProgressProps) {
   return (
-    <div className={cn("w-full bg-gray-200 rounded-full h-2 overflow-hidden", className)}>
-      <div className="bg-blue-600 h-full rounded-full transition-all" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+    <div className={cn("h-2 w-full overflow-hidden rounded-full bg-hairline", className)}>
+      <div
+        className="h-full rounded-full bg-accent-500 transition-all"
+        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+      />
     </div>
   )
 }

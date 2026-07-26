@@ -16,9 +16,9 @@ function ratioOf(row: InventoryStatusRow): number {
 }
 
 function barColor(ratio: number): string {
-  if (ratio <= 0) return "bg-red-500"
-  if (ratio <= 0.25) return "bg-amber-500"
-  return "bg-emerald-500"
+  if (ratio <= 0) return "bg-danger"
+  if (ratio <= 0.25) return "bg-warning"
+  return "bg-success"
 }
 
 export function InventoryStatus({ rows }: { rows: InventoryStatusRow[] }) {
@@ -32,19 +32,19 @@ export function InventoryStatus({ rows }: { rows: InventoryStatusRow[] }) {
   return (
     <section>
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-800">สถานะคลังอุปกรณ์</h2>
+        <h2 className="text-sm font-semibold text-foreground">สถานะคลังอุปกรณ์</h2>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="text-xs font-medium text-blue-600"
+          className="text-xs font-medium text-accent-600"
         >
           ดูทั้งหมด
         </button>
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-400">ยังไม่มีข้อมูลอุปกรณ์</p>
+        <div className="rounded-lg bg-surface p-4 shadow-sm">
+          <p className="text-sm text-faint">ยังไม่มีข้อมูลอุปกรณ์</p>
         </div>
       ) : (
         <>
@@ -82,7 +82,7 @@ export function InventoryStatus({ rows }: { rows: InventoryStatusRow[] }) {
                   </button>
                   {/* Milky veil over the non-active cards behind the centre */}
                   {!isCenter && (
-                    <div className="pointer-events-none absolute inset-0 rounded-3xl bg-white/55" />
+                    <div className="pointer-events-none absolute inset-0 rounded-lg bg-white/55" />
                   )}
                 </div>
               )
@@ -94,7 +94,7 @@ export function InventoryStatus({ rows }: { rows: InventoryStatusRow[] }) {
                 type="button"
                 onClick={() => go(-1)}
                 aria-label="ก่อนหน้า"
-                className="absolute left-1 top-1/2 z-40 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-md backdrop-blur transition-colors hover:bg-white"
+                className="absolute left-1 top-1/2 z-40 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-muted shadow-md backdrop-blur transition-colors hover:bg-white"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -104,7 +104,7 @@ export function InventoryStatus({ rows }: { rows: InventoryStatusRow[] }) {
                 type="button"
                 onClick={() => go(1)}
                 aria-label="ถัดไป"
-                className="absolute right-1 top-1/2 z-40 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-600 shadow-md backdrop-blur transition-colors hover:bg-white"
+                className="absolute right-1 top-1/2 z-40 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-muted shadow-md backdrop-blur transition-colors hover:bg-white"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -121,7 +121,7 @@ export function InventoryStatus({ rows }: { rows: InventoryStatusRow[] }) {
                 aria-label={`ไปที่ ${row.type}`}
                 className={
                   "h-1.5 rounded-full transition-all " +
-                  (i === active ? "w-5 bg-blue-600" : "w-1.5 bg-gray-300")
+                  (i === active ? "w-5 bg-accent-500" : "w-1.5 bg-faint")
                 }
               />
             ))}
@@ -139,10 +139,10 @@ function InventoryCard({ row }: { row: InventoryStatusRow }) {
   const ready = row.available > 0
 
   return (
-    <div className="flex h-48 flex-col justify-between rounded-3xl border border-gray-100 bg-white p-5 shadow-lg shadow-gray-200/60">
+    <div className="flex h-48 flex-col justify-between rounded-lg bg-surface p-5 shadow-lg">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-base font-bold leading-snug text-gray-900">{row.type}</p>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-500">
+        <p className="text-base font-bold leading-snug text-foreground">{row.type}</p>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent-50 text-accent-600">
           <EquipmentIcon type={row.type} className="h-5 w-5" strokeWidth={1.75} />
         </span>
       </div>
@@ -151,11 +151,11 @@ function InventoryCard({ row }: { row: InventoryStatusRow }) {
         <span
           className={
             "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold " +
-            (ready ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")
+            (ready ? "bg-success-soft text-success-text" : "bg-danger-soft text-danger-text")
           }
         >
           <span
-            className={"h-1.5 w-1.5 rounded-full " + (ready ? "bg-emerald-500" : "bg-red-500")}
+            className={"h-1.5 w-1.5 rounded-full " + (ready ? "bg-success" : "bg-danger")}
           />
           {ready ? "พร้อมใช้งาน" : "ไม่พร้อมใช้งาน"}
         </span>
@@ -163,13 +163,13 @@ function InventoryCard({ row }: { row: InventoryStatusRow }) {
 
       <div>
         <div className="mb-1.5 flex items-baseline justify-between">
-          <span className="text-sm text-gray-400">คงเหลือ</span>
-          <span className="text-sm font-semibold text-gray-900">
+          <span className="text-sm text-muted">คงเหลือ</span>
+          <span className="text-sm font-semibold text-foreground">
             <span className="text-lg">{row.available}</span>
-            <span className="text-gray-400"> / {row.total}</span>
+            <span className="text-faint"> / {row.total}</span>
           </span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+        <div className="h-2 overflow-hidden rounded-full bg-hairline">
           <div
             className={"h-full rounded-full transition-all " + barColor(ratio)}
             style={{ width: `${Math.max(ratio * 100, row.available > 0 ? 5 : 0)}%` }}
@@ -195,18 +195,18 @@ function InventoryModal({
       aria-modal="true"
     >
       <div
-        className="max-h-[85vh] w-full max-w-md overflow-hidden rounded-t-3xl bg-white shadow-xl sm:rounded-3xl"
+        className="max-h-[85vh] w-full max-w-md overflow-hidden rounded-t-xl bg-surface shadow-xl sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-          <h2 className="text-base font-semibold text-gray-900">สถานะคลังอุปกรณ์</h2>
+        <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
+          <h2 className="text-base font-semibold text-foreground">สถานะคลังอุปกรณ์</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="ปิด"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-muted transition-all duration-150 ease-apple hover:bg-hairline active:scale-[0.97] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-500/15"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" strokeWidth={1.75} />
           </button>
         </div>
 
@@ -217,21 +217,21 @@ function InventoryModal({
             return (
               <div
                 key={row.type}
-                className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3"
+                className="flex items-center gap-3 rounded-lg bg-surface-2 p-3"
               >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-500">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-accent-50 text-accent-600">
                   <EquipmentIcon type={row.type} className="h-5 w-5" strokeWidth={1.75} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-semibold text-gray-900">{row.type}</p>
-                    <span className="shrink-0 text-sm font-semibold text-gray-900">
+                    <p className="truncate text-sm font-semibold text-foreground">{row.type}</p>
+                    <span className="shrink-0 text-sm font-semibold text-foreground">
                       {row.available}
-                      <span className="text-gray-400"> / {row.total}</span>
+                      <span className="text-faint"> / {row.total}</span>
                     </span>
                   </div>
                   <div className="mt-1.5 flex items-center gap-2">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-hairline">
                       <div
                         className={"h-full rounded-full " + barColor(ratio)}
                         style={{ width: `${Math.max(ratio * 100, row.available > 0 ? 5 : 0)}%` }}
@@ -240,7 +240,7 @@ function InventoryModal({
                     <span
                       className={
                         "shrink-0 text-[11px] font-medium " +
-                        (ready ? "text-emerald-600" : "text-red-600")
+                        (ready ? "text-success" : "text-danger")
                       }
                     >
                       {ready ? "พร้อมใช้งาน" : "ไม่พร้อม"}
@@ -252,10 +252,10 @@ function InventoryModal({
           })}
         </div>
 
-        <div className="border-t border-gray-100 p-4">
+        <div className="border-t border-hairline p-4">
           <Link
             href="/inventory"
-            className="flex w-full items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+            className="flex w-full items-center justify-center rounded-md bg-accent-500 px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 ease-apple hover:bg-accent-600 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-500/15"
           >
             ไปที่คลังอุปกรณ์
           </Link>

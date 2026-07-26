@@ -62,7 +62,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="equipmentCode">
-              รหัสอุปกรณ์ <span className="text-red-600">*</span>
+              รหัสอุปกรณ์ <span className="text-danger">*</span>
             </Label>
             <Input
               id="equipmentCode"
@@ -75,7 +75,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
 
           <div className="space-y-1.5">
             <Label htmlFor="assetNumber">
-              หมายเลขครุภัณฑ์ <span className="text-red-600">*</span>
+              หมายเลขครุภัณฑ์ <span className="text-danger">*</span>
             </Label>
             <Input
               id="assetNumber"
@@ -88,7 +88,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
 
           <div className="space-y-1.5">
             <Label htmlFor="equipmentType">
-              ประเภทอุปกรณ์ <span className="text-red-600">*</span>
+              ประเภทอุปกรณ์ <span className="text-danger">*</span>
             </Label>
             <Select
               id="equipmentType"
@@ -107,7 +107,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
 
           <div className="space-y-1.5">
             <Label htmlFor="condition">
-              สภาพอุปกรณ์ <span className="text-red-600">*</span>
+              สภาพอุปกรณ์ <span className="text-danger">*</span>
             </Label>
             <Select
               id="condition"
@@ -133,7 +133,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
 
           <div className="space-y-1.5">
             <Label htmlFor="receivedDate">
-              วันที่รับเข้าคลัง <span className="text-red-600">*</span>
+              วันที่รับเข้าคลัง <span className="text-danger">*</span>
             </Label>
             <DatePicker
               id="receivedDate"
@@ -145,7 +145,7 @@ export function NewEquipmentForm({ equipmentTypes }: NewEquipmentFormProps) {
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <p className="text-sm text-danger bg-danger-soft border border-danger rounded-md px-3 py-2">
               {error}
             </p>
           )}

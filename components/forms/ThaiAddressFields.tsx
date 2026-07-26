@@ -8,7 +8,7 @@ import { MapPin, Building2, Milestone, Mail } from "lucide-react"
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null
-  return <p className="text-red-600 text-xs mt-1">{message}</p>
+  return <p className="text-danger text-xs mt-1">{message}</p>
 }
 
 function RequiredLabel({
@@ -22,9 +22,9 @@ function RequiredLabel({
 }) {
   return (
     <Label htmlFor={htmlFor} className="flex items-center gap-1.5">
-      <Icon className="w-4 h-4 text-gray-400" />
+      <Icon className="w-4 h-4 text-faint" />
       {children}
-      <span className="text-red-500">*</span>
+      <span className="text-danger">*</span>
     </Label>
   )
 }
@@ -129,7 +129,7 @@ export function ThaiAddressFields() {
         <Controller name="address.postalCode" control={control}
           rules={{ required: "กรุณาเลือกตำบล/แขวงเพื่อระบุรหัสไปรษณีย์" }}
           render={({ field }) => (
-            <Input {...field} id="postalCode" maxLength={5} placeholder="00000" readOnly className="bg-gray-50" />
+            <Input {...field} id="postalCode" maxLength={5} placeholder="00000" readOnly className="bg-canvas" />
           )} />
         <FieldError message={addrErrors?.postalCode?.message} />
       </div>

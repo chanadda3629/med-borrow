@@ -39,23 +39,23 @@ export function PhotoUploadField({ value, onChange, label = "อัปโหล�
     <div className={cn("space-y-2", className)}>
       {value ? (
         <div className="relative inline-block">
-          <img src={value.url} alt="uploaded" className="w-32 h-32 object-cover rounded-lg border border-gray-200" />
+          <img src={value.url} alt="uploaded" className="w-32 h-32 object-cover rounded-lg border border-hairline" />
           <button type="button" onClick={() => { onChange(undefined); if (inputRef.current) inputRef.current.value = "" }}
-            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center">
+            className="absolute -top-2 -right-2 w-6 h-6 bg-danger text-white rounded-full flex items-center justify-center transition-all duration-150 ease-apple active:scale-[0.97]">
             <X className="w-4 h-4" />
           </button>
         </div>
       ) : (
         <button type="button" onClick={() => inputRef.current?.click()}
           disabled={loading}
-          className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:border-blue-400 hover:text-blue-400 transition-colors disabled:opacity-50">
+          className="w-32 h-32 border-2 border-dashed border-border rounded-lg flex flex-col items-center justify-center gap-2 text-faint hover:border-accent-400 hover:text-accent-500 hover:bg-accent-50 transition-all duration-150 ease-apple disabled:opacity-50">
           <Camera className="w-8 h-8" />
           <span className="text-xs text-center">{loading ? "กำลังอัปโหลด..." : label}</span>
         </button>
       )}
       <input ref={inputRef} type="file" accept={accept} capture="environment"
         className="hidden" onChange={handleFile} />
-      {error && <p className="text-red-600 text-xs">{error}</p>}
+      {error && <p className="text-danger text-xs">{error}</p>}
     </div>
   )
 }

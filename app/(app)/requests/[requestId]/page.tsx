@@ -181,17 +181,17 @@ export default async function RequestDetailPage({ params }: PageProps) {
             </CardHeader>
             <CardContent className="space-y-3">
               {aiResult.data.recommendations.map((rec, i) => (
-                <div key={i} className="border rounded-lg p-3 space-y-1">
+                <div key={i} className="border border-hairline rounded-lg p-3 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">
                       อันดับ {rec.rankingOrder}: {rec.equipmentType}
                     </span>
-                    <span className="text-sm font-bold text-blue-600">
+                    <span className="text-sm font-bold text-accent-600">
                       {rec.matchingScorePercentage}%
                     </span>
                   </div>
                   {rec.explanation && (
-                    <p className="text-xs text-gray-500">{rec.explanation}</p>
+                    <p className="text-xs text-muted">{rec.explanation}</p>
                   )}
                 </div>
               ))}
@@ -204,16 +204,16 @@ export default async function RequestDetailPage({ params }: PageProps) {
                     ? [aiResult.data.staffDecisionEquipmentType]
                     : [])
                 return decided.length > 0 ? (
-                  <div className="text-sm text-gray-600 pt-1">
+                  <div className="text-sm text-muted pt-1">
                     <span className="font-medium">เจ้าหน้าที่เลือก: </span>
                     {decided.join(", ")}
                   </div>
                 ) : null
               })()}
               {aiResult.data.staffOverrideNote && (
-                <p className="text-xs text-gray-500 italic">{aiResult.data.staffOverrideNote}</p>
+                <p className="text-xs text-muted italic">{aiResult.data.staffOverrideNote}</p>
               )}
-              <p className="text-xs text-amber-600 mt-2">
+              <p className="text-xs text-warning mt-2">
                 * AI ให้ข้อมูลเป็นการสนับสนุนการตัดสินใจเท่านั้น เจ้าหน้าที่เป็นผู้อนุมัติขั้นสุดท้าย
               </p>
             </CardContent>
@@ -243,7 +243,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
               <div className="pt-1">
                 <Link
                   href={`/inventory/${request.assignedEquipmentItem.id}`}
-                  className="text-xs text-blue-600 hover:underline"
+                  className="text-xs text-accent-600 hover:underline"
                 >
                   ดูรายละเอียดอุปกรณ์
                 </Link>
@@ -259,7 +259,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
               <CardTitle className="text-base">การอนุมัติ</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Row label="ผลการพิจารณา" value={<span className="text-green-600 font-medium">อนุมัติ</span>} />
+              <Row label="ผลการพิจารณา" value={<span className="text-success font-medium">อนุมัติ</span>} />
               <Row label="ชื่อผู้อนุมัติ" value={request.approverName} />
             </CardContent>
           </Card>
@@ -270,7 +270,7 @@ export default async function RequestDetailPage({ params }: PageProps) {
               <CardTitle className="text-base">การไม่อนุมัติ</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Row label="ผลการพิจารณา" value={<span className="text-red-600 font-medium">ไม่อนุมัติ</span>} />
+              <Row label="ผลการพิจารณา" value={<span className="text-danger font-medium">ไม่อนุมัติ</span>} />
               <Row label="สาเหตุ" value={request.rejectionReason ?? "-"} />
             </CardContent>
           </Card>
@@ -301,13 +301,13 @@ export default async function RequestDetailPage({ params }: PageProps) {
 
         {/* Delivery-success confirmation (shown at the "จัดส่งสำเร็จ" stage) */}
         {currentStatus === "จัดส่งสำเร็จ" && (
-          <Card className="border-teal-200 bg-teal-50/60">
+          <Card className="border border-success/30 bg-success-soft">
             <CardContent className="pt-4">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="w-6 h-6 text-teal-600 shrink-0" />
+                <CheckCircle2 className="w-6 h-6 text-success shrink-0" />
                 <div className="space-y-0.5">
-                  <p className="text-base font-bold text-teal-700">จัดส่งอุปกรณ์สำเร็จแล้ว</p>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-base font-bold text-success-text">จัดส่งอุปกรณ์สำเร็จแล้ว</p>
+                  <p className="text-sm text-foreground">
                     {request.assignedEquipmentItem
                       ? `${toThaiEquipmentType(request.assignedEquipmentItem.equipmentType)} (${request.assignedEquipmentItem.assetNumber})`
                       : "ส่งมอบอุปกรณ์ให้ผู้ป่วยเรียบร้อย"}
@@ -348,8 +348,8 @@ export default async function RequestDetailPage({ params }: PageProps) {
                   <span
                     className={
                       request.returnRecord.condition === "ชำรุด"
-                        ? "text-red-600 font-medium"
-                        : "text-green-600 font-medium"
+                        ? "text-danger font-medium"
+                        : "text-success font-medium"
                     }
                   >
                     {request.returnRecord.condition}
@@ -428,8 +428,8 @@ export default async function RequestDetailPage({ params }: PageProps) {
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2">
-      <span className="text-sm text-gray-500 w-36 shrink-0">{label}</span>
-      <span className="text-sm font-medium text-gray-900 flex-1">{value}</span>
+      <span className="text-sm text-muted w-36 shrink-0">{label}</span>
+      <span className="text-sm font-medium text-foreground flex-1">{value}</span>
     </div>
   )
 }
