@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { verifyLineSignature } from "@/lib/integrations/line/line-signature"
-import { consumeLineLinkToken } from "@/lib/integrations/line/link-token"
+import { LINK_CODE_PATTERN, consumeLineLinkCode, unlinkLineUser } from "@/lib/integrations/line/link-code"
 import { sendLineReplyMessage } from "@/lib/integrations/line/line-client"
 import {
   PULL_ACTIONS,
@@ -9,6 +9,10 @@ import {
   buildStatusReply,
   buildDueReply,
   buildContactReply,
+  buildLinkFailedReply,
+  buildLinkSuccessReply,
+  buildRegisterReply,
+  buildUnlinkDoneReply,
   buildUnlinkedReply,
   buildWelcomeReply,
 } from "@/lib/integrations/line/pull-status"
@@ -21,7 +25,6 @@ type LineEvent = {
   source?: { userId?: string }
   message?: { type: string; id: string; text?: string }
   postback?: { data: string }
-  link?: { nonce: string; result: "ok" | "failed" }
 }
 
 export async function POST(request: NextRequest) {
@@ -50,67 +53,99 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ ok: true })
 }
 
-type PullIntent = "status" | "due" | "contact"
+type Intent = "status" | "due" | "contact" | "register" | "unlink"
 
 // Map a postback (Rich Menu / quick-reply buttons) or a matching text message
-// onto a pull intent. Text matching supports a Rich Menu configured with text
+// onto an intent. Text matching supports a Rich Menu configured with text
 // actions as well as the user simply typing the label.
-function resolvePullIntent(event: LineEvent): PullIntent | null {
+function resolveIntent(event: LineEvent): Intent | null {
   if (event.type === "postback" && event.postback?.data) {
     if (event.postback.data === PULL_ACTIONS.status) return "status"
     if (event.postback.data === PULL_ACTIONS.due) return "due"
     if (event.postback.data === PULL_ACTIONS.contact) return "contact"
+    if (event.postback.data === PULL_ACTIONS.register) return "register"
+    if (event.postback.data === PULL_ACTIONS.unlink) return "unlink"
   }
   if (event.type === "message" && event.message?.type === "text" && event.message.text) {
     const text = event.message.text.trim()
     if (text === PULL_LABELS.status) return "status"
     if (text === PULL_LABELS.due) return "due"
     if (text === PULL_LABELS.contact) return "contact"
+    if (text === PULL_LABELS.register) return "register"
+    if (text === PULL_LABELS.unlink) return "unlink"
   }
   return null
 }
 
-async function handleEvent(event: LineEvent): Promise<void> {
-  // Account linking (existing flow): bind the LINE userId to the patient record.
-  if (event.type === "accountLink" && event.link && event.source?.userId) {
-    if (event.link.result === "ok") {
-      await consumeLineLinkToken(event.link.nonce, event.source.userId)
-    }
-    return
-  }
+function findLinkedPatient(lineUserId: string) {
+  return db.patient.findUnique({
+    where: { lineUserId },
+    select: { id: true, fullName: true },
+  })
+}
 
+async function handleEvent(event: LineEvent): Promise<void> {
   const userId = event.source?.userId
   if (!userId) return
 
   // Friend added — free welcome reply with the quick-reply bar.
   if (event.type === "follow" && event.replyToken) {
-    await sendLineReplyMessage(event.replyToken, buildWelcomeReply())
+    const patient = await findLinkedPatient(userId)
+    await sendLineReplyMessage(event.replyToken, buildWelcomeReply(!!patient))
     return
   }
 
   // Pull model — answer a menu tap with a free reply token.
-  const intent = resolvePullIntent(event)
+  const intent = resolveIntent(event)
   if (intent && event.replyToken) {
-    await handlePullIntent(intent, userId, event.replyToken)
+    await handleIntent(intent, userId, event.replyToken)
     return
   }
 
-  // Free-text message from a linked patient — store it for staff to answer
-  // manually in /reports (no auto-reply bot).
   if (event.type === "message" && event.message?.type === "text") {
+    const text = event.message.text?.trim() ?? ""
+
+    // A staff-issued link code typed into the chat — this is the entire linking
+    // flow. userId comes straight off this webhook, so it is by construction the
+    // same ID the Messaging API pushes to.
+    if (event.replyToken && LINK_CODE_PATTERN.test(text.toUpperCase())) {
+      await handleLinkCode(text, userId, event.replyToken)
+      return
+    }
+
+    // Free-text message from a linked patient — store it for staff to answer
+    // manually in /reports (no auto-reply bot).
     await storeInboundMessage(userId, event.message)
   }
 }
 
-async function handlePullIntent(intent: PullIntent, userId: string, replyToken: string): Promise<void> {
-  const patient = await db.patient.findUnique({
-    where: { lineUserId: userId },
-    select: { id: true, fullName: true },
-  })
+async function handleLinkCode(code: string, userId: string, replyToken: string): Promise<void> {
+  const outcome = await consumeLineLinkCode(code, userId)
+  if (outcome.ok) {
+    await sendLineReplyMessage(replyToken, buildLinkSuccessReply(outcome.patientName, outcome.transferred))
+    return
+  }
+  await sendLineReplyMessage(replyToken, buildLinkFailedReply(outcome.reason))
+}
+
+async function handleIntent(intent: Intent, userId: string, replyToken: string): Promise<void> {
+  // The only action available before linking, so it must not require a patient.
+  if (intent === "register") {
+    await sendLineReplyMessage(replyToken, buildRegisterReply())
+    return
+  }
+
+  const patient = await findLinkedPatient(userId)
 
   // Never leak patient data to an unlinked friend.
   if (!patient) {
     await sendLineReplyMessage(replyToken, buildUnlinkedReply())
+    return
+  }
+
+  if (intent === "unlink") {
+    await unlinkLineUser(userId)
+    await sendLineReplyMessage(replyToken, buildUnlinkDoneReply())
     return
   }
 

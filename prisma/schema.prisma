@@ -230,15 +230,28 @@ model NotificationHistory {
   @@index([patientId, requestId])
 }
 
+// A short, single-use code that staff read out to the patient. The patient types
+// it into the LINE chat; the webhook binds event.source.userId to this patient.
+// `code` keeps the old `nonce` column so no data migration is needed — the value
+// used to be a 48-char OAuth nonce, it is now a 6-char human-readable code.
 model LineLinkToken {
   id         String    @id @default(cuid())
   patientId  String    @unique
-  nonce      String    @unique
+  code       String    @unique @map("nonce")
   expiresAt  DateTime
   consumedAt DateTime?
   createdAt  DateTime  @default(now())
 
   patient    Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+// Brute-force guard for the link code, keyed by the LINE user doing the guessing.
+// Not tied to a patient: an attacker guessing codes has no patient yet.
+model LineLinkAttempt {
+  lineUserId  String    @id
+  failedCount Int       @default(0)
+  lockedUntil DateTime?
+  updatedAt   DateTime  @updatedAt
 }
 
 model LineMessage {

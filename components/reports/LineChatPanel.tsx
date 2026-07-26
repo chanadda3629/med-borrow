@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge"
 import { cn } from "@/lib/utils"
 import { sendQuickReply } from "@/lib/actions/line/send-quick-reply"
 import { sendChatMessage } from "@/lib/actions/line/send-chat-message"
+import { createLinkCode } from "@/lib/actions/line/create-link-code"
 import type { Trigger } from "@/lib/integrations/line/notification-service"
 import type { ConversationSummary } from "./LineConversationList"
 
@@ -29,29 +30,109 @@ function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString("th-TH", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })
 }
 
-function QrConnect({ patientId }: { patientId: string }) {
+// The Official Account's public add-friend link. Same QR for every patient — it
+// only adds the friend; the code below is what identifies which patient.
+const OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID
+const ADD_FRIEND_URL = OA_ID ? `https://line.me/R/ti/p/${OA_ID}` : null
+
+function AddFriendQr() {
   const [dataUrl, setDataUrl] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+  // Bumped by the retry button to re-run the render. The QR content itself never
+  // expires — it is the OA's public add-friend link — so this only recovers from a
+  // failed render, not from a stale link.
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    // The QR is scanned on the patient's phone, so it must point at a publicly
-    // reachable host. window.location.origin is http://localhost:3000 in dev,
-    // which the phone cannot open — NEXT_PUBLIC_APP_URL overrides it.
-    const origin = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
-    const url = `${origin.replace(/\/$/, "")}/api/line/link/start?patientId=${patientId}`
-    QRCode.toDataURL(url, { width: 220, margin: 1 })
-      .then(setDataUrl)
-      .catch(() => setDataUrl(null))
-  }, [patientId])
+    if (!ADD_FRIEND_URL) return
+    let cancelled = false
+    QRCode.toDataURL(ADD_FRIEND_URL, { width: 180, margin: 1 })
+      .then((url) => {
+        if (!cancelled) setDataUrl(url)
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [attempt])
 
-  if (!dataUrl) {
+  if (!ADD_FRIEND_URL) {
+    return <p className="text-xs text-danger">ยังไม่ได้ตั้งค่า NEXT_PUBLIC_LINE_OA_ID</p>
+  }
+  if (failed) {
     return (
-      <div className="flex h-[220px] w-[220px] items-center justify-center text-sm text-faint">
-        กำลังสร้าง QR...
+      <div className="flex flex-col items-center gap-1.5">
+        <p className="text-xs text-danger">สร้าง QR ไม่สำเร็จ</p>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setFailed(false)
+            setAttempt((n) => n + 1)
+          }}
+        >
+          ลองใหม่
+        </Button>
       </div>
     )
   }
+  if (!dataUrl) {
+    return <div className="flex h-[180px] w-[180px] items-center justify-center text-sm text-faint">กำลังสร้าง QR...</div>
+  }
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={dataUrl} alt="QR เชื่อมต่อ LINE" width={220} height={220} className="rounded-lg" />
+  return <img src={dataUrl} alt="QR เพิ่มเพื่อน LINE" width={180} height={180} className="rounded-lg" />
+}
+
+// Two steps, in order: add the OA as a friend (QR), then type a staff-issued code
+// into the chat. The code is what binds this patient to that LINE account.
+function LinkSteps({ patientId }: { patientId: string }) {
+  const [code, setCode] = useState<{ value: string; expiresAt: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  function handleCreate() {
+    setError(null)
+    startTransition(async () => {
+      const result = await createLinkCode(patientId)
+      if (!result.success) setError(result.error)
+      else setCode({ value: result.data.code, expiresAt: result.data.expiresAt })
+    })
+  }
+
+  return (
+    <div className="space-y-3 text-center">
+      <p className="text-sm text-muted">ผู้ป่วยยังไม่ได้เชื่อมต่อ LINE</p>
+
+      <div className="flex flex-col items-center gap-1.5">
+        <p className="text-xs font-medium text-foreground">1. ให้ผู้ป่วย/ญาติสแกนเพื่อเพิ่มเพื่อน</p>
+        <AddFriendQr />
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-xs font-medium text-foreground">2. แจ้งรหัสนี้ให้พิมพ์ส่งในแชท LINE</p>
+        {code ? (
+          <>
+            <p className="font-mono text-3xl font-semibold tracking-[0.3em] text-accent-600">{code.value}</p>
+            <p className="text-xs text-faint">
+              หมดอายุ{" "}
+              {new Date(code.expiresAt).toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" })} น.
+            </p>
+            <Button type="button" variant="outline" size="sm" disabled={isPending} onClick={handleCreate}>
+              สร้างรหัสใหม่
+            </Button>
+          </>
+        ) : (
+          <Button type="button" disabled={isPending} onClick={handleCreate}>
+            สร้างรหัสเชื่อมต่อ
+          </Button>
+        )}
+        {error && <p className="text-xs text-danger">{error}</p>}
+      </div>
+    </div>
+  )
 }
 
 interface LineChatPanelProps {
@@ -64,7 +145,6 @@ export function LineChatPanel({ conversation, onClose }: LineChatPanelProps) {
   const [pendingDate, setPendingDate] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const [showQr, setShowQr] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -151,19 +231,7 @@ export function LineChatPanel({ conversation, onClose }: LineChatPanelProps) {
 
         <div className="space-y-2 border-t border-hairline p-3">
           {!conversation.linked ? (
-            <div className="space-y-2 text-center">
-              <p className="text-sm text-muted">ผู้ป่วยยังไม่ได้เชื่อมต่อ LINE</p>
-              {showQr ? (
-                <div className="flex flex-col items-center gap-2">
-                  <QrConnect patientId={conversation.patientId} />
-                  <p className="text-xs text-faint">ให้ผู้ป่วย/ญาติสแกนด้วยมือถือเพื่อเพิ่มเพื่อน LINE</p>
-                </div>
-              ) : (
-                <Button type="button" onClick={() => setShowQr(true)}>
-                  เชื่อมต่อ LINE
-                </Button>
-              )}
-            </div>
+            <LinkSteps patientId={conversation.patientId} />
           ) : (
             <>
               {request && request.availableTriggers.length > 0 && (

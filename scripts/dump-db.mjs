@@ -28,6 +28,7 @@ const MODELS = [
   "equipmentItemReturnHistory",
   "notificationHistory",
   "lineLinkToken",
+  "lineLinkAttempt",
   "lineMessage",
 ]
 
