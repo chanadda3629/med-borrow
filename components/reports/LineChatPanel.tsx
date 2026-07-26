@@ -31,9 +31,10 @@ function formatDateTime(iso: string): string {
 }
 
 // The Official Account's public add-friend link. Same QR for every patient — it
-// only adds the friend; the code below is what identifies which patient.
-const OA_ID = process.env.NEXT_PUBLIC_LINE_OA_ID
-const ADD_FRIEND_URL = OA_ID ? `https://line.me/R/ti/p/${OA_ID}` : null
+// only adds the friend; the code below is what identifies which patient. The
+// basic ID is public and there is exactly one OA, so it is a constant rather than
+// config — nothing to set up per environment.
+const ADD_FRIEND_URL = "https://line.me/R/ti/p/@337hbwqf"
 
 function AddFriendQr() {
   const [dataUrl, setDataUrl] = useState<string | null>(null)
@@ -44,7 +45,6 @@ function AddFriendQr() {
   const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    if (!ADD_FRIEND_URL) return
     let cancelled = false
     QRCode.toDataURL(ADD_FRIEND_URL, { width: 180, margin: 1 })
       .then((url) => {
@@ -58,9 +58,6 @@ function AddFriendQr() {
     }
   }, [attempt])
 
-  if (!ADD_FRIEND_URL) {
-    return <p className="text-xs text-danger">ยังไม่ได้ตั้งค่า NEXT_PUBLIC_LINE_OA_ID</p>
-  }
   if (failed) {
     return (
       <div className="flex flex-col items-center gap-1.5">
