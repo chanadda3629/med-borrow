@@ -22,7 +22,7 @@ const LARGE_ACTIONS: Action[] = [
     Icon: ClipboardList,
     card: "bg-surface",
     text: "text-foreground",
-    icon: "text-hairline",
+    icon: "text-[#C4E4F5]",
   },
   {
     href: "/requests/new",
@@ -31,7 +31,7 @@ const LARGE_ACTIONS: Action[] = [
     Icon: FilePlus,
     card: "bg-surface",
     text: "text-foreground",
-    icon: "text-hairline",
+    icon: "text-[#DCD6FA]",
   },
 ]
 
@@ -43,7 +43,7 @@ const SMALL_ACTIONS: Action[] = [
     Icon: ClipboardCheck,
     card: "bg-surface",
     text: "text-foreground",
-    icon: "text-hairline",
+    icon: "text-[#F5E6CC]",
   },
   {
     href: "/inventory",
@@ -52,7 +52,7 @@ const SMALL_ACTIONS: Action[] = [
     Icon: Package,
     card: "bg-surface",
     text: "text-foreground",
-    icon: "text-hairline",
+    icon: "text-[#C4E4D7]",
   },
   {
     href: "/inventory/new",
@@ -61,7 +61,7 @@ const SMALL_ACTIONS: Action[] = [
     Icon: PackagePlus,
     card: "bg-surface",
     text: "text-foreground",
-    icon: "text-hairline",
+    icon: "text-[#F5D1D1]",
   },
 ]
 
