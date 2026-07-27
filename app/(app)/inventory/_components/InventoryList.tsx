@@ -28,8 +28,9 @@ export async function InventoryList({
   const { type, status, q, sort } = await searchParams
 
   // Filter chips carry Thai labels, but rows may be stored as English reference
-  // codes (see seed.mjs) — match either form. Codes are ordered by equipmentCode
-  // so the list reads like the request records (BED-2023-001, BED-2023-002, …).
+  // codes (see seed.mjs) — match either form. Rows are ordered by when they were
+  // added (createdAt) so the list reflects the order equipment was registered:
+  // newest first by default ("ใหม่สุด"), oldest first with sort=asc ("เก่าสุด").
   const fetched = await db.equipmentItem.findMany({
     where: {
       ...(type ? { equipmentType: { in: [type, toEquipmentTypeCode(type)] } } : {}),
@@ -43,7 +44,7 @@ export async function InventoryList({
           }
         : {}),
     },
-    orderBy: { equipmentCode: sort === "desc" ? "desc" : "asc" },
+    orderBy: { createdAt: sort === "asc" ? "asc" : "desc" },
     take: LIST_PAGE_SIZE + 1,
     select: {
       id: true,
